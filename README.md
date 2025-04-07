@@ -69,23 +69,23 @@ The app will be automatically built and deployed. Streamlit Cloud will:
 
 The simulator implements a 1D Clifford Quantum Cellular Automaton, where:
 - Each cell state is represented by a Pauli operator (I, X, Z, or Y)
-- The evolution is governed by a local update rule in the form of a 2x6 matrix over F2
+- The evolution is governed by a local update rule in the form of a 2×6 matrix over F₂
 - The global update preserves the Clifford group structure
 - Periodic boundary conditions are applied
 
 ### Relation to Classical Cellular Automata
 
 This quantum cellular automaton can be seen as a quantum generalization of [elementary cellular automata](https://en.wikipedia.org/wiki/Elementary_cellular_automaton). While classical elementary cellular automata operate with binary states (0 or 1) and update rules based on three neighboring cells, our quantum version:
-- Uses four possible states (I, X, Z, Y) represented by pairs of bits in F2
+- Uses four possible states (I, X, Z, Y) represented by pairs of bits in F₂
 - Preserves the quantum mechanical properties through Clifford operations
 - Updates each cell based on its left and right neighbors similar to classical CAs
-- Uses matrix operations over F2 instead of boolean functions
+- Uses matrix operations over F₂ instead of boolean functions
 
 The key difference is that our QCA preserves the algebraic structure of Pauli operators, making it a suitable model for quantum information propagation while classical CAs focus on binary state evolution.
 
 ### Local Rule Matrix Structure
 
-The local rule is specified by a 2×6 matrix over F2 (binary field), which can be understood as three 2×2 blocks:
+The local rule is specified by a 2×6 matrix over F₂ (binary field with elements {0,1}), which can be understood as three 2×2 blocks:
 ```
 [A_left | A_center | A_right]
 ```
@@ -108,13 +108,13 @@ In contrast, the default simulation rule:
 ```
 creates interesting propagation patterns as each cell's state depends on both its neighbors and itself.
 
-Each cell's state is encoded as a pair of bits (x,z) representing Pauli operators:
+Each cell's state is encoded as a pair of bits (x,z) ∈ F₂² representing Pauli operators:
 - I = (0,0)
 - X = (1,0)
 - Z = (0,1)
 - Y = (1,1)
 
-The matrix multiplication is performed modulo 2, ensuring the output remains in F2.
+The matrix multiplication is performed modulo 2, ensuring the output remains in F₂.
 
 ## Contributing
 
