@@ -73,6 +73,39 @@ The simulator implements a 1D Clifford Quantum Cellular Automaton, where:
 - The global update preserves the Clifford group structure
 - Periodic boundary conditions are applied
 
+### Local Rule Matrix Structure
+
+The local rule is specified by a 2×6 matrix over F2 (binary field), which can be understood as three 2×2 blocks:
+```
+[A_left | A_center | A_right]
+```
+where each block determines how a cell's new state depends on its left neighbor (A_left), itself (A_center), and its right neighbor (A_right).
+
+For example, the identity transformation that leaves each cell unchanged would use:
+```
+[0 0 | 1 0 | 0 0]  First row
+[0 0 | 0 1 | 0 0]  Second row
+```
+Here:
+- A_left = [0 0; 0 0]: No contribution from left neighbor
+- A_center = [1 0; 0 1]: Identity matrix, preserves current state
+- A_right = [0 0; 0 0]: No contribution from right neighbor
+
+In contrast, the default simulation rule:
+```
+[1 0 | 1 1 | 0 1]  First row
+[0 1 | 0 1 | 1 0]  Second row
+```
+creates interesting propagation patterns as each cell's state depends on both its neighbors and itself.
+
+Each cell's state is encoded as a pair of bits (x,z) representing Pauli operators:
+- I = (0,0)
+- X = (1,0)
+- Z = (0,1)
+- Y = (1,1)
+
+The matrix multiplication is performed modulo 2, ensuring the output remains in F2.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

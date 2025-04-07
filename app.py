@@ -63,6 +63,13 @@ st.sidebar.markdown("""
 <div class="description">
 Enter each row as 6 numbers (0 or 1) separated by spaces.
 The local rule determines how each cell updates based on its neighbors.
+
+For example, the identity transformation would be:
+```
+0 0 1 0 0 0  (first row)
+0 0 0 1 0 0  (second row)
+```
+This leaves each cell's state unchanged as it only uses the identity matrix in the center block.
 </div>
 """, unsafe_allow_html=True)
 
