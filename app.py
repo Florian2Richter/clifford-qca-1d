@@ -84,7 +84,3 @@ states, pauli_strings = simulate_QCA(n, T_steps, initial_state, global_operator)
 st.subheader("Spacetime Diagram")
 fig = plot_spacetime(pauli_strings, n, return_fig=True)
 st.pyplot(fig)
-
-st.subheader("Pauli Strings per Time Step")
-for t, s in enumerate(pauli_strings):
-    st.text(f"Time {t}: {s}")
