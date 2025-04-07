@@ -36,7 +36,8 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the Streamlit app:
+### Local Development
+Run the Streamlit app locally:
 ```bash
 streamlit run app.py
 ```
@@ -46,6 +47,23 @@ The app will open in your default web browser. You can then:
 2. Set the local rule matrix (2x6 over F2)
 3. Choose an initial state configuration
 4. Watch the QCA evolution in the spacetime diagram
+
+### Streamlit Cloud Deployment
+
+To deploy this app on Streamlit Cloud:
+
+1. Fork this repository to your GitHub account
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Sign in with GitHub
+4. Click "New app"
+5. Select your forked repository and branch (main)
+6. Set the main file path as `app.py`
+7. Click "Deploy"
+
+The app will be automatically built and deployed. Streamlit Cloud will:
+- Install the required Python packages from `requirements.txt`
+- Use the configuration from `.streamlit/config.toml`
+- Make the app available at a public URL
 
 ## Mathematical Background
 
