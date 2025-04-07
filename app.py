@@ -1,8 +1,8 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-from qca.core import build_global_operator, simulate_QCA
-from qca.visualization import pauli_to_numeric
+from qca.core import build_global_operator, simulate_QCA, pauli_string_to_state
+from qca.visualization import pauli_to_numeric, plot_spacetime
 from matplotlib.colors import ListedColormap
 
 st.title("1D Clifford QCA Simulator")
@@ -46,32 +46,34 @@ else:
 st.sidebar.header("Initial State")
 init_option = st.sidebar.selectbox("Choose initial state:", ["Single active cell", "Random", "Manual"])
 
-def get_initial_state(n):
-    # Create a state vector of length 2*n: first n for x-part, next n for z-part.
+def get_single_active_state(n):
+    # Create a state vector of length 2*n representing all I's,
+    # except for one X (i.e. (1,0)) at the center.
     state = np.zeros(2 * n, dtype=int)
     center = n // 2
-    state[center] = 1  # Single active cell: set the x-part at the center to 1.
+    state[2*center] = 1  # Set x-part for an X operator
     return state
 
 if init_option == "Single active cell":
-    initial_state = get_initial_state(n)
+    initial_state = get_single_active_state(n)
 elif init_option == "Random":
-    initial_state = np.random.randint(0, 2, size=2 * n)
+    # Generate a random Pauli string of length n from I, X, Z, Y.
+    choices = ['I', 'X', 'Z', 'Y']
+    random_pauli = ''.join(np.random.choice(choices, size=n))
+    st.sidebar.write("Random initial state:", random_pauli)
+    initial_state = pauli_string_to_state(random_pauli)
 elif init_option == "Manual":
-    manual_x = st.sidebar.text_input("X-part (binary string of length n)", "0" * (n // 2) + "1" + "0" * (n - n // 2 - 1))
-    manual_z = st.sidebar.text_input("Z-part (binary string of length n)", "0" * n)
-    if len(manual_x) != n or len(manual_z) != n:
-        st.sidebar.error("Binary strings must be of length equal to the number of cells.")
+    manual_pauli = st.sidebar.text_input("Pauli string (I, X, Z, Y)", "I"*(n//2) + "X" + "I"*(n - n//2 - 1))
+    if len(manual_pauli) != n:
+        st.sidebar.error("Pauli string must be of length equal to the number of cells.")
         st.stop()
-    try:
-        x_part = np.array([int(ch) for ch in manual_x], dtype=int)
-        z_part = np.array([int(ch) for ch in manual_z], dtype=int)
-    except:
-        st.sidebar.error("Invalid binary string. Use only 0 and 1.")
+    valid_chars = set("IXZY")
+    if any(ch not in valid_chars for ch in manual_pauli):
+        st.sidebar.error("Invalid characters in Pauli string. Use only I, X, Z, Y.")
         st.stop()
-    initial_state = np.concatenate([x_part, z_part])
+    initial_state = pauli_string_to_state(manual_pauli)
 else:
-    initial_state = get_initial_state(n)
+    initial_state = get_single_active_state(n)
 
 # Build the global operator from the local rule.
 global_operator = build_global_operator(n, local_rule)
@@ -80,17 +82,7 @@ global_operator = build_global_operator(n, local_rule)
 states, pauli_strings = simulate_QCA(n, T_steps, initial_state, global_operator)
 
 st.subheader("Spacetime Diagram")
-# Create a spacetime diagram using matplotlib.
-time_steps = len(pauli_strings)
-data = np.array([np.array([pauli_to_numeric(s)[i] for i in range(n)]) for s in pauli_strings])
-
-cmap = ListedColormap(["white", "red", "blue", "green"])
-fig, ax = plt.subplots(figsize=(0.5 * n, 0.5 * time_steps))
-cax = ax.imshow(data, cmap=cmap, interpolation="nearest", aspect="auto")
-ax.set_xlabel("Cell position")
-ax.set_ylabel("Time step")
-ax.set_title("1D Clifford QCA Spacetime Diagram")
-fig.colorbar(cax, ticks=[0, 1, 2, 3], label="Pauli")
+fig = plot_spacetime(pauli_strings, n, return_fig=True)
 st.pyplot(fig)
 
 st.subheader("Pauli Strings per Time Step")

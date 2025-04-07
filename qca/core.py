@@ -31,7 +31,6 @@ def build_global_operator(n, local_rule):
     # Initialize the global operator T.
     T = np.zeros((2*n, 2*n), dtype=int)
     for i in range(n):
-        # Determine indices for left neighbor, cell itself, and right neighbor (with periodic BC)
         left_idx   = (i - 1) % n
         center_idx = i
         right_idx  = (i + 1) % n
@@ -47,7 +46,7 @@ def vector_to_pauli_string(v):
     into a string of Pauli operators.
     
     Mapping:
-      (0,0) -> I, (1,0) -> X, (0,1) -> Z, (1,1) -> Y.
+      (0,0) -> I (white), (1,0) -> X (red), (0,1) -> Z (blue), (1,1) -> Y (green).
       
     v should be a 1D numpy array of length 2*n.
     """
@@ -67,12 +66,29 @@ def vector_to_pauli_string(v):
             pauli_str += "Y"
     return pauli_str
 
+def pauli_string_to_state(pauli_str):
+    """
+    Convert a Pauli string (of length n, consisting of I, X, Z, Y)
+    into a state vector of length 2*n over F2.
+    
+    Mapping:
+      I -> (0,0), X -> (1,0), Z -> (0,1), Y -> (1,1).
+    """
+    mapping = {'I': (0, 0), 'X': (1, 0), 'Z': (0, 1), 'Y': (1, 1)}
+    n = len(pauli_str)
+    state = np.zeros(2*n, dtype=int)
+    for i, ch in enumerate(pauli_str):
+        if ch not in mapping:
+            raise ValueError("Invalid character in Pauli string. Must be one of I, X, Z, Y.")
+        state[2*i], state[2*i+1] = mapping[ch]
+    return state
+
 def simulate_QCA(n, T_steps, initial_state, global_operator):
     """
     Simulate the 1D QCA for T_steps time steps.
     
     - n: number of cells.
-    - initial_state: a numpy array of length 2*n (over F2).
+    - initial_state: a numpy array of length 2*n (over F2) where each cell is (x,z).
     - global_operator: a (2*n)x(2*n) numpy array representing the update rule.
     
     Returns a tuple:
