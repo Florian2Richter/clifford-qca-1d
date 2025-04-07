@@ -34,11 +34,25 @@ def plot_spacetime(pauli_strings, cell_count, return_fig=False):
     
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     
-    im = ax.imshow(data, cmap=cmap, interpolation="nearest", aspect='equal')
+    # Create a pcolormesh plot instead of imshow for better control over cell boundaries
+    x = np.arange(cell_count + 1)
+    y = np.arange(time_steps + 1)
+    X, Y = np.meshgrid(x, y)
     
-    ax.grid(True, color='black', linewidth=0.5)
-    ax.set_xticks(np.arange(cell_count), labels=range(cell_count))
-    ax.set_yticks(np.arange(time_steps), labels=range(time_steps))
+    # Plot the data with pcolormesh
+    im = ax.pcolormesh(X, Y, data, cmap=cmap, shading='flat')
+    
+    # Set the axis limits to match the data
+    ax.set_xlim(0, cell_count)
+    ax.set_ylim(0, time_steps)
+    
+    # Set ticks at cell centers
+    ax.set_xticks(np.arange(0.5, cell_count, 1))
+    ax.set_yticks(np.arange(0.5, time_steps, 1))
+    
+    # Set tick labels
+    ax.set_xticklabels(range(cell_count))
+    ax.set_yticklabels(range(time_steps))
     
     ax.set_xlabel("Cell position")
     ax.set_ylabel("Time step")
