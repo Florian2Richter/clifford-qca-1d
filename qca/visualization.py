@@ -25,8 +25,8 @@ def plot_spacetime(pauli_strings, cell_count, return_fig=False):
         data[t, :] = pauli_to_numeric(s)
     
     # Define a more appealing colormap with warm brown and complementary colors
-    # I: white, X: teal, Z: coral, Y: lavender
-    cmap = ListedColormap(["white", "#008080", "#FF7F50", "#E6E6FA"])
+    # I: white, X: teal, Z: coral, Y: darker lavender
+    cmap = ListedColormap(["white", "#008080", "#FF7F50", "#9370DB"])
     
     # Calculate figure size based on number of cells and time steps
     base_cell_size = 0.2  # Base size for each cell in inches
