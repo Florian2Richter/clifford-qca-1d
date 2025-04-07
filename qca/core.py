@@ -42,20 +42,19 @@ def build_global_operator(n, local_rule):
 
 def vector_to_pauli_string(v):
     """
-    Convert a state vector over F2 (first half: x-part, second half: z-part)
-    into a string of Pauli operators.
+    Convert a state vector (with each cell stored as (x, z)) into a Pauli string.
     
     Mapping:
-      (0,0) -> I (white), (1,0) -> X (red), (0,1) -> Z (blue), (1,1) -> Y (green).
-      
+      (0,0) -> I, (1,0) -> X, (0,1) -> Z, (1,1) -> Y.
+    
     v should be a 1D numpy array of length 2*n.
     """
     v = v % 2
     n = len(v) // 2
     pauli_str = ""
     for i in range(n):
-        x = v[i]
-        z = v[n + i]
+        x = v[2*i]
+        z = v[2*i+1]
         if x == 0 and z == 0:
             pauli_str += "I"
         elif x == 1 and z == 0:
