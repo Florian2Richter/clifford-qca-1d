@@ -136,9 +136,7 @@ def plot_spacetime_plotly(pauli_strings):
         yaxis_autorange='reversed', # Time flows downwards
         xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
         yaxis=dict(tickmode='linear', dtick=max(1, time_steps // 15)),
-        height=500, # Keep fixed height
-        width=800,  # Explicitly set width
-        autosize=True # Disable autosizing
+        autosize=True  # Enable autosizing
     )
     
     # JavaScript + HTML-Komponente zum Auslesen der Breite
