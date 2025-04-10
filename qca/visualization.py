@@ -137,8 +137,8 @@ def plot_spacetime_plotly(pauli_strings):
         yaxis_autorange='reversed', # Time flows downwards
         xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
         yaxis=dict(tickmode='linear', dtick=max(1, time_steps // 15)),
-        width=800,
-        height=800,
+        width=cell_count*5,
+        height=time_steps*5,
         autosize=True  # Enable autosizing
     )
     
