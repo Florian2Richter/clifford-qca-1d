@@ -27,22 +27,13 @@ def plot_spacetime(pauli_strings, cell_count, return_fig=False):
     # Define a more appealing colormap with warm brown and complementary colors
     # I: white, X: teal, Z: coral, Y: dark grey
     cmap = ListedColormap(["white", "#008080", "#FF7F50", "#4A4A4A"])
-    
-    # Calculate figure size based on number of cells and time steps
-    base_cell_size = 0.2  # Base size for each cell in inches
-    
-    # Calculate initial dimensions
-    raw_width = cell_count * base_cell_size
-    raw_height = time_steps * base_cell_size
-    
-    # Scale factor to get reasonable figure size
-    scale = min(15 / raw_width, 10 / raw_height)  # Max width 15", max height 10"
-    
-    fig_width = raw_width * scale
-    fig_height = raw_height * scale
-    
-    # Create figure with white background
-    fig, ax = plt.subplots(figsize=(fig_width, fig_height), facecolor='white')
+
+    # Set fixed figure size
+    fixed_fig_width = 10  # inches
+    fixed_fig_height = 7  # inches
+
+    # Create figure with white background using fixed size
+    fig, ax = plt.subplots(figsize=(fixed_fig_width, fixed_fig_height), facecolor='white')
     ax.set_facecolor('white')
     
     # Create a pcolormesh plot instead of imshow for better control over cell boundaries
