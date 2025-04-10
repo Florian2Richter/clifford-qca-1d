@@ -29,8 +29,8 @@ def plot_spacetime(pauli_strings, cell_count, return_fig=False):
     cmap = ListedColormap(["white", "#008080", "#FF7F50", "#4A4A4A"])
 
     # Set fixed figure size
-    fixed_fig_width = 10  # inches
-    fixed_fig_height = 7  # inches
+    fixed_fig_width = 8  # inches (reduced from 10)
+    fixed_fig_height = 5  # inches (reduced from 7)
 
     # Create figure with white background using fixed size
     fig, ax = plt.subplots(figsize=(fixed_fig_width, fixed_fig_height), facecolor='white')
