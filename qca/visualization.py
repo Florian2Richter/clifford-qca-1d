@@ -121,8 +121,12 @@ def plot_spacetime_plotly(pauli_strings):
         showscale=True,
         colorbar=dict(
             title='Pauli Operator',
-            tickvals=[0.5, 1.5, 2.5, 3.5], # Centered ticks for discrete values
-            ticktext=['I', 'X', 'Z', 'Y']
+            tickvals=[0.5, 1.5, 2.5, 3.5],
+            ticktext=['I', 'X', 'Z', 'Y'],
+            lenmode='pixels',
+            len=500,
+            yanchor='top',
+            y=1
         ),
         # Custom hover text
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
