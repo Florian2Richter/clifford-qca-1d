@@ -156,7 +156,7 @@ def plot_spacetime_plotly(pauli_strings):
             {
                 'buttons': [
                     {
-                        'args': [None, {'frame': {'duration': 500, 'redraw': True}, 'fromcurrent': True}],
+                        'args': [None, {'frame': {'duration': 125, 'redraw': True}, 'fromcurrent': True}],
                         'label': 'Play',
                         'method': 'animate'
                     },
@@ -174,6 +174,24 @@ def plot_spacetime_plotly(pauli_strings):
                 'xanchor': 'right',
                 'y': 0,
                 'yanchor': 'top'
+            }
+        ],
+        sliders=[
+            {
+                'steps': [
+                    {
+                        'args': [[str(k)], {'frame': {'duration': 0, 'redraw': True}, 'mode': 'immediate', 'transition': {'duration': 0}}],
+                        'label': str(k),
+                        'method': 'animate'
+                    } for k in range(time_steps)
+                ],
+                'transition': {'duration': 0},
+                'x': 0.1,
+                'xanchor': 'left',
+                'y': 0,
+                'yanchor': 'top',
+                'currentvalue': {'font': {'size': 20}, 'prefix': 'Time Step:', 'visible': True, 'xanchor': 'right'},
+                'len': 0.9
             }
         ]
     )
