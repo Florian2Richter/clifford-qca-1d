@@ -56,21 +56,21 @@ def plot_spacetime(pauli_strings, cell_count, return_fig=False):
     ax.set_xticks(np.arange(0.5, cell_count, x_tick_spacing))
     ax.set_yticks(np.arange(0.5, time_steps, y_tick_spacing))
     
-    # Set tick labels with smaller font size
-    ax.set_xticklabels(range(0, cell_count, x_tick_spacing), fontsize=8)
-    ax.set_yticklabels(range(0, time_steps, y_tick_spacing), fontsize=8)
+    # Set tick labels with much smaller font size
+    ax.set_xticklabels(range(0, cell_count, x_tick_spacing), fontsize=6)
+    ax.set_yticklabels(range(0, time_steps, y_tick_spacing), fontsize=6)
     
-    # Set axis labels with smaller font size
-    ax.set_xlabel("Cell position", fontsize=10, fontweight='bold', labelpad=8)
-    ax.set_ylabel("Time step", fontsize=10, fontweight='bold', labelpad=8)
+    # Set axis labels with much smaller font size
+    ax.set_xlabel("Cell position", fontsize=8, fontweight='bold', labelpad=6)
+    ax.set_ylabel("Time step", fontsize=8, fontweight='bold', labelpad=6)
     
-    # Set title with smaller font size
-    ax.set_title("1D Clifford QCA Spacetime Diagram", fontsize=12, fontweight='bold', pad=15)
+    # Set title with much smaller font size
+    ax.set_title("1D Clifford QCA Spacetime Diagram", fontsize=10, fontweight='bold', pad=10)
     
-    # Create a colorbar with smaller font size
+    # Create a colorbar with much smaller font size
     cbar = fig.colorbar(im, ticks=[0.4, 1.2, 2.0, 2.8], orientation='vertical', pad=0.02)
-    cbar.ax.set_yticklabels(['I', 'X', 'Z', 'Y'], fontsize=10)
-    cbar.set_label("Pauli Operator", fontsize=10, fontweight='bold', labelpad=10)
+    cbar.ax.set_yticklabels(['I', 'X', 'Z', 'Y'], fontsize=8)
+    cbar.set_label("Pauli Operator", fontsize=8, fontweight='bold', labelpad=8)
     
     # Add grid lines at cell boundaries
     ax.grid(True, color='black', linewidth=0.5, linestyle='-', alpha=0.2)

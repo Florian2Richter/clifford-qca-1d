@@ -150,4 +150,4 @@ The diagram shows the evolution of Pauli operators (I, X, Z, Y) over time in the
 # Create a container for the plot with some padding
 with st.container():
     fig = plot_spacetime(pauli_strings, n, return_fig=True)
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, use_container_width=False)
