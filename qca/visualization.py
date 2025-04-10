@@ -149,8 +149,10 @@ def plot_spacetime_plotly(pauli_strings):
     # Create frames for each time step
     frames = [go.Frame(data=[go.Heatmap(z=data[:k+1])], name=str(k)) for k in range(time_steps)]
 
-    # Add animation to the figure
+    # Add frames to the figure
     fig.frames = frames
+
+    # Automatically start the animation
     fig.update_layout(
         updatemenus=[
             {
@@ -158,11 +160,6 @@ def plot_spacetime_plotly(pauli_strings):
                     {
                         'args': [None, {'frame': {'duration': 125, 'redraw': True}, 'fromcurrent': True}],
                         'label': 'Play',
-                        'method': 'animate'
-                    },
-                    {
-                        'args': [[None], {'frame': {'duration': 0, 'redraw': True}, 'mode': 'immediate', 'transition': {'duration': 0}}],
-                        'label': 'Pause',
                         'method': 'animate'
                     }
                 ],
@@ -174,24 +171,6 @@ def plot_spacetime_plotly(pauli_strings):
                 'xanchor': 'right',
                 'y': 0,
                 'yanchor': 'top'
-            }
-        ],
-        sliders=[
-            {
-                'steps': [
-                    {
-                        'args': [[str(k)], {'frame': {'duration': 0, 'redraw': True}, 'mode': 'immediate', 'transition': {'duration': 0}}],
-                        'label': str(k),
-                        'method': 'animate'
-                    } for k in range(time_steps)
-                ],
-                'transition': {'duration': 0},
-                'x': 0.1,
-                'xanchor': 'left',
-                'y': 0,
-                'yanchor': 'top',
-                'currentvalue': {'font': {'size': 20}, 'prefix': 'Time Step:', 'visible': True, 'xanchor': 'right'},
-                'len': 0.9
             }
         ]
     )
