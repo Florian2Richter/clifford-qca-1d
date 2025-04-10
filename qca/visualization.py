@@ -124,7 +124,7 @@ def plot_spacetime_plotly(pauli_strings):
             tickvals=[0.5, 1.5, 2.5, 3.5],
             ticktext=['I', 'X', 'Z', 'Y'],
             lenmode='pixels',
-            len=500,
+            len=200,
             yanchor='top',
             y=1
         ),
@@ -141,12 +141,12 @@ def plot_spacetime_plotly(pauli_strings):
         yaxis_autorange='reversed', # Time flows downwards
         xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
         yaxis=dict(tickmode='linear', dtick=max(1, time_steps // 15)),
-        width=cell_count*5,
-        height=time_steps*5,
+        width=cell_count*10,
+        height=time_steps*10,
         autosize=True  # Enable autosizing
     )
     
     # Set color bar height to 500 pixels
-    fig.update_traces(colorbar=dict(len=0.5))
+    #fig.update_traces(colorbar=dict(len=0.5))
     
     return fig
