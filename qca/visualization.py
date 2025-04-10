@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import plotly.graph_objects as go
 import streamlit.components.v1 as components
+import streamlit as st
 
 def pauli_to_numeric(pauli_str):
     """
@@ -139,21 +140,26 @@ def plot_spacetime_plotly(pauli_strings):
         autosize=True  # Enable autosizing
     )
     
-    # JavaScript + HTML-Komponente zum Auslesen der Breite
-    component_value = components.html(
-        """
-        <script>
-        const streamlitDoc = window.parent.document;
-        const width = streamlitDoc.querySelector("main .block-container").offsetWidth;
-        // Schick das per postMessage an Streamlit
-        window.parent.postMessage({type: 'streamlit:setComponentValue', value: width}, '*');
-        </script>
-        """,
-        height=0  # Unsichtbar
-    )
+    # JavaScript-Hack: Misst Breite des sichtbaren Bereichs und sendet sie zurück
+    width_px = st.experimental_get_query_params().get("width_px", [None])[0]
 
-    # Jetzt kommt der gemessene Wert im nächsten Durchlauf an
-    width_px = component_value if isinstance(component_value, int) else 800  # Fallback
+    if width_px is None:
+        # Initialer Run – JavaScript misst und schreibt Breite in URL
+        components.html(
+            """
+            <script>
+            const width = window.parent.document.querySelector("main .block-container").offsetWidth;
+            const url = new URL(window.location);
+            url.searchParams.set("width_px", width);
+            window.location.replace(url);
+            </script>
+            """,
+            height=0,
+        )
+        st.stop()
+
+    # Convert width_px to integer
+    width_px = int(width_px)
 
     # Calculate aspect ratio based on n_steps and n_cells
     aspect_ratio = time_steps / cell_count
