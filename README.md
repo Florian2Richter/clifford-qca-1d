@@ -1,6 +1,10 @@
 # 1D Clifford QCA Simulator
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://clifford-qca-1d-wqukva9js5377m8nz48nd8.streamlit.app/)
+<div align="center">
+  <a href="https://clifford-qca-1d-wqukva9js5377m8nz48nd8.streamlit.app/">
+    <img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit" width="200">
+  </a>
+</div>
 
 An interactive web application for simulating and visualizing 1-Dimensional Clifford Quantum Cellular Automata (QCA). This simulator demonstrates the evolution of Pauli operators through a 1D lattice over time, providing insights into quantum information propagation.
 
