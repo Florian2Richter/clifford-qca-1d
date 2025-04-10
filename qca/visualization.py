@@ -137,42 +137,10 @@ def plot_spacetime_plotly(pauli_strings):
         yaxis_autorange='reversed', # Time flows downwards
         xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
         yaxis=dict(tickmode='linear', dtick=max(1, time_steps // 15)),
+        width=800,
+        height=800,
         autosize=True  # Enable autosizing
     )
     
-    # JavaScript-Hack: Misst Breite des sichtbaren Bereichs und sendet sie zurück
-    width_px = st.query_params.get('width_px', 800)
 
-    if width_px is None:
-        # Initialer Run – JavaScript misst und schreibt Breite in URL
-        components.html(
-            """
-            <script>
-            const width = window.parent.document.querySelector("main .block-container").offsetWidth;
-            const url = new URL(window.location);
-            url.searchParams.set("width_px", width);
-            window.location.replace(url);
-            </script>
-            """,
-            height=0,
-        )
-        st.stop()
-
-    # Convert width_px to integer
-    width_px = int(width_px)
-
-    # Calculate aspect ratio based on n_steps and n_cells
-    aspect_ratio = time_steps / cell_count
-    plot_height = int(width_px * aspect_ratio)
-
-    # Update the Plotly figure layout
-    fig.update_layout(
-        height=plot_height
-    )
-    
-    # Remove fixed width and height
-    fig.update_layout(
-        autosize=True
-    )
-    
     return fig
