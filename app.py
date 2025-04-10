@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from qca.core import build_global_operator, simulate_QCA, pauli_string_to_state
-from qca.visualization import pauli_to_numeric, plot_spacetime
+from qca.visualization import pauli_to_numeric, plot_spacetime_plotly
 from matplotlib.colors import ListedColormap
 
 # Set page configuration
@@ -139,15 +139,15 @@ global_operator = build_global_operator(n, local_rule)
 # Run the simulation.
 states, pauli_strings = simulate_QCA(n, T_steps, initial_state, global_operator)
 
-# Display the spacetime diagram
+# Display the spacetime diagram using Plotly
 st.markdown('<h2 class="sub-header">Spacetime Diagram</h2>', unsafe_allow_html=True)
 st.markdown("""
 <div class="description">
-The diagram shows the evolution of Pauli operators (I, X, Z, Y) over time in the quantum cellular automaton.
+The diagram shows the evolution of Pauli operators (I, X, Z, Y) over time in the quantum cellular automaton. You can zoom, pan, and hover over cells.
 </div>
 """, unsafe_allow_html=True)
 
-# Create a container for the plot with some padding
-with st.container():
-    fig = plot_spacetime(pauli_strings, n, return_fig=True)
-    st.pyplot(fig, use_container_width=False)
+# Create the plot using the Plotly function
+fig = plot_spacetime_plotly(pauli_strings)
+# Display the Plotly figure using st.plotly_chart
+st.plotly_chart(fig, use_container_width=True)
