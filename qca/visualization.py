@@ -166,4 +166,9 @@ def plot_spacetime_plotly(pauli_strings):
         height=plot_height
     )
     
+    # Remove fixed width and height
+    fig.update_layout(
+        autosize=True
+    )
+    
     return fig
