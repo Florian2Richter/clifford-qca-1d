@@ -29,8 +29,8 @@ def plot_spacetime(pauli_strings, cell_count, return_fig=False):
     cmap = ListedColormap(["white", "#008080", "#FF7F50", "#4A4A4A"])
 
     # Set fixed figure size
-    fixed_fig_width = 8  # inches (reduced from 10)
-    fixed_fig_height = 5  # inches (reduced from 7)
+    fixed_fig_width = 6  # inches (reduced from 8)
+    fixed_fig_height = 4  # inches (reduced from 5)
 
     # Create figure with white background using fixed size
     fig, ax = plt.subplots(figsize=(fixed_fig_width, fixed_fig_height), facecolor='white')
@@ -56,21 +56,21 @@ def plot_spacetime(pauli_strings, cell_count, return_fig=False):
     ax.set_xticks(np.arange(0.5, cell_count, x_tick_spacing))
     ax.set_yticks(np.arange(0.5, time_steps, y_tick_spacing))
     
-    # Set tick labels with larger font size
-    ax.set_xticklabels(range(0, cell_count, x_tick_spacing), fontsize=12)
-    ax.set_yticklabels(range(0, time_steps, y_tick_spacing), fontsize=12)
+    # Set tick labels with smaller font size
+    ax.set_xticklabels(range(0, cell_count, x_tick_spacing), fontsize=8)
+    ax.set_yticklabels(range(0, time_steps, y_tick_spacing), fontsize=8)
     
-    # Set axis labels with much larger font size
-    ax.set_xlabel("Cell position", fontsize=16, fontweight='bold', labelpad=10)
-    ax.set_ylabel("Time step", fontsize=16, fontweight='bold', labelpad=10)
+    # Set axis labels with smaller font size
+    ax.set_xlabel("Cell position", fontsize=10, fontweight='bold', labelpad=8)
+    ax.set_ylabel("Time step", fontsize=10, fontweight='bold', labelpad=8)
     
-    # Set title with larger font size
-    ax.set_title("1D Clifford QCA Spacetime Diagram", fontsize=18, fontweight='bold', pad=20)
+    # Set title with smaller font size
+    ax.set_title("1D Clifford QCA Spacetime Diagram", fontsize=12, fontweight='bold', pad=15)
     
-    # Create a more appealing colorbar with larger font size
+    # Create a colorbar with smaller font size
     cbar = fig.colorbar(im, ticks=[0.4, 1.2, 2.0, 2.8], orientation='vertical', pad=0.02)
-    cbar.ax.set_yticklabels(['I', 'X', 'Z', 'Y'], fontsize=14)  # Much larger font for operator labels
-    cbar.set_label("Pauli Operator", fontsize=16, fontweight='bold', labelpad=15)
+    cbar.ax.set_yticklabels(['I', 'X', 'Z', 'Y'], fontsize=10)
+    cbar.set_label("Pauli Operator", fontsize=10, fontweight='bold', labelpad=10)
     
     # Add grid lines at cell boundaries
     ax.grid(True, color='black', linewidth=0.5, linestyle='-', alpha=0.2)
