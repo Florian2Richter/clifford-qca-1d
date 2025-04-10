@@ -149,5 +149,5 @@ The diagram shows the evolution of Pauli operators (I, X, Z, Y) over time in the
 
 # Create the plot using the Plotly function
 fig = plot_spacetime_plotly(pauli_strings)
-# Display the Plotly figure using st.plotly_chart, disable container width
-st.plotly_chart(fig, use_container_width=False)
+# Display the Plotly figure using st.plotly_chart
+st.plotly_chart(fig, use_container_width=True)
