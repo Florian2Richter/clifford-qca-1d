@@ -133,17 +133,11 @@ def plot_spacetime_plotly(pauli_strings):
         xaxis_title='Cell Position',
         yaxis_title='Time Step',
         yaxis_autorange='reversed', # Time flows downwards
-        xaxis=dict(
-            tickmode='linear', 
-            dtick=max(1, cell_count // 15)
-        ),
-        yaxis=dict(
-            tickmode='linear', 
-            dtick=max(1, time_steps // 15),
-            scaleanchor="x",  # Anchor y-axis scaling to x-axis
-            scaleratio=6     # Make 1 y-unit equal to 6 x-units visually
-        ),
-        autosize=True # Explicitly enable autosize (default)
+        xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
+        yaxis=dict(tickmode='linear', dtick=max(1, time_steps // 15)),
+        height=500, # Keep fixed height
+        width=800,  # Explicitly set width
+        autosize=False # Disable autosizing
     )
     
     return fig
