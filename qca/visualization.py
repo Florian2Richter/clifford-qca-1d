@@ -142,5 +142,7 @@ def plot_spacetime_plotly(pauli_strings):
         autosize=True  # Enable autosizing
     )
     
-
+    # Set color bar height to 500 pixels
+    fig.update_traces(colorbar=dict(len=0.5))
+    
     return fig
