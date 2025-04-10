@@ -141,7 +141,7 @@ def plot_spacetime_plotly(pauli_strings):
     )
     
     # JavaScript-Hack: Misst Breite des sichtbaren Bereichs und sendet sie zurück
-    width_px = st.experimental_get_query_params().get("width_px", [None])[0]
+    width_px = st.query_params.get('width_px', 800)
 
     if width_px is None:
         # Initialer Run – JavaScript misst und schreibt Breite in URL
