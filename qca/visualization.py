@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import plotly.graph_objects as go
+import streamlit.components.v1 as components
 
 def pauli_to_numeric(pauli_str):
     """
@@ -138,6 +139,31 @@ def plot_spacetime_plotly(pauli_strings):
         height=500, # Keep fixed height
         width=800,  # Explicitly set width
         autosize=False # Disable autosizing
+    )
+    
+    # JavaScript + HTML-Komponente zum Auslesen der Breite
+    component_value = components.html(
+        """
+        <script>
+        const streamlitDoc = window.parent.document;
+        const width = streamlitDoc.querySelector("main .block-container").offsetWidth;
+        // Schick das per postMessage an Streamlit
+        window.parent.postMessage({type: 'streamlit:setComponentValue', value: width}, '*');
+        </script>
+        """,
+        height=0  # Unsichtbar
+    )
+
+    # Jetzt kommt der gemessene Wert im nächsten Durchlauf an
+    width_px = component_value if isinstance(component_value, int) else 800  # Fallback
+
+    # Seitenverhältnis berechnen
+    aspect_ratio = time_steps / cell_count
+    plot_height = int(width_px * aspect_ratio)
+
+    # Update the Plotly figure layout
+    fig.update_layout(
+        height=plot_height
     )
     
     return fig
