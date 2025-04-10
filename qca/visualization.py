@@ -158,7 +158,7 @@ def plot_spacetime_plotly(pauli_strings):
     width_px = component_value if isinstance(component_value, int) else 800  # Fallback
 
     # Seitenverhältnis berechnen
-    aspect_ratio = time_steps / cell_count
+    aspect_ratio = 1  # Ensure square cells
     plot_height = int(width_px * aspect_ratio)
 
     # Update the Plotly figure layout
