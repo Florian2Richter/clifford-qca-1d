@@ -13,6 +13,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Add version indicator to verify deployment
+st.sidebar.markdown("**App Version: 2023-04-13-reset**")
+
 # Custom CSS for better styling
 st.markdown("""
 <style>
@@ -34,9 +37,9 @@ st.markdown("""
         margin-bottom: 1.5rem;
     }
     .sidebar-header {
-        font-size: 1.2rem;
-        color: #1E88E5;
-        margin-bottom: 0.5rem;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        margin-bottom: 15px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -54,8 +57,8 @@ The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lat
 
 # Sidebar for simulation parameters
 st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
-n = st.sidebar.number_input("Number of cells", min_value=3, value=100, step=1)
-T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=50, step=1)
+n = st.sidebar.number_input("Number of cells", min_value=3, value=50, step=1)
+T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=25, step=1)
 
 # Sidebar for local rule matrix input
 st.sidebar.markdown('<h3 class="sidebar-header">Local Rule Matrix (2x6 over F2)</h3>', unsafe_allow_html=True)
