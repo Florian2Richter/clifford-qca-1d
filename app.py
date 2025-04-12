@@ -57,8 +57,8 @@ The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lat
 
 # Sidebar for simulation parameters
 st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
-n = st.sidebar.number_input("Number of cells", min_value=3, value=50, step=1)
-T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=25, step=1)
+n = st.sidebar.number_input("Number of cells", min_value=3, value=500, step=1)
+T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=250, step=1)
 
 # Sidebar for local rule matrix input
 st.sidebar.markdown('<h3 class="sidebar-header">Local Rule Matrix (2x6 over F2)</h3>', unsafe_allow_html=True)
