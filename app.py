@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2023-04-13-reset**")
+st.sidebar.markdown("**App Version: 2025-04-15**")
 
 # Custom CSS for better styling
 st.markdown("""
