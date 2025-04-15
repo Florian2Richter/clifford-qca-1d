@@ -146,33 +146,5 @@ def plot_spacetime_plotly(pauli_strings):
         autosize=True  # Enable autosizing
     )
     
-    # Create frames for each time step
-    frames = [go.Frame(data=[go.Heatmap(z=data[:k+1])], name=str(k)) for k in range(time_steps)]
-
-    # Add frames to the figure
-    fig.frames = frames
-
-    # Automatically start the animation
-    fig.update_layout(
-        updatemenus=[
-            {
-                'buttons': [
-                    {
-                        'args': [None, {'frame': {'duration': 125, 'redraw': True}, 'fromcurrent': True}],
-                        'label': 'Play',
-                        'method': 'animate'
-                    }
-                ],
-                'direction': 'left',
-                'pad': {'r': 10, 't': 87},
-                'showactive': False,
-                'type': 'buttons',
-                'x': 0.1,
-                'xanchor': 'right',
-                'y': 0,
-                'yanchor': 'top'
-            }
-        ]
-    )
     
     return fig
