@@ -6,7 +6,12 @@ from qca.visualization import pauli_to_numeric, plot_spacetime_plotly
 from matplotlib.colors import ListedColormap
 import time
 import hashlib
+import cProfile
+import pstats
+import io
 
+
+profiler = cProfile.Profile()
 # Set page configuration
 st.set_page_config(
     page_title="1D Clifford QCA Simulator",
@@ -16,7 +21,7 @@ st.set_page_config(
 )
 
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-17.2**")
+st.sidebar.markdown("**App Version: 2025-04-17.3 (with profiling)**")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -194,6 +199,8 @@ def calculate_step(current_state, step_number):
     
     return next_state, next_pauli, calculation_time
 
+profiler.enable()
+
 # Progressive simulation - calculate one step at a time and update UI
 if st.session_state.initialized and st.session_state.simulation_running:
     if st.session_state.current_step < st.session_state.target_steps:
@@ -244,10 +251,18 @@ if st.session_state.initialized and st.session_state.simulation_running:
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
 
+profiler.disable()
 # If simulation complete, just show the final plot
 if st.session_state.simulation_complete:
     fig = plot_spacetime_plotly(st.session_state.pauli_strings)
     plot_placeholder.plotly_chart(fig, use_container_width=False)
+    # Now show the profiler summary in the sidebar
+    s = io.StringIO()
+    ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+    ps.print_stats(10)     # top 10 functions by cumulative time
+
+    st.sidebar.markdown("### 🐢 Profiling Results")
+    st.sidebar.text(s.getvalue())
 
 # For initial load, show empty plot
 if not st.session_state.initialized:
