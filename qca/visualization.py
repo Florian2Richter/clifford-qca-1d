@@ -101,7 +101,7 @@ def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
         yaxis=dict(tickmode='linear', dtick=max(1, total_time_steps // 15)),
         width=800,
         height=500,
-        autosize=True  # Enable autosizing
+        autosize=False  # Enable autosizing
     )
     
     return fig
