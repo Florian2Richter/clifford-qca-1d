@@ -80,17 +80,6 @@ def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
                     for y in range(total_time_steps)]
     ))
     
-    # Add progress indicator if still calculating
-    if current_time_steps < total_time_steps:
-        progress_pct = int(100 * current_time_steps / total_time_steps)
-        fig.add_annotation(
-            text=f"Calculating: {current_time_steps}/{total_time_steps} steps ({progress_pct}%)",
-            xref="paper", yref="paper",
-            x=0.5, y=1.05,
-            showarrow=False,
-            font=dict(size=14, color="red")
-        )
-    
     # Update layout with fixed axes
     fig.update_layout(
         title='1D Clifford QCA Spacetime Diagram',
