@@ -236,7 +236,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
         
         # Rerun to continue the simulation if not complete
         if st.session_state.current_step < st.session_state.target_steps:
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.session_state.simulation_running = False
             st.session_state.simulation_complete = True
@@ -269,4 +269,4 @@ if not st.session_state.initialized:
     st.session_state.initialized = True
     
     # Force a rerun to start the simulation
-    st.experimental_rerun()
+    st.rerun()
