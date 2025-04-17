@@ -194,21 +194,19 @@ def calculate_step(current_state, step_number):
     
     return next_state, next_pauli, calculation_time
 
-# Progressive simulation - calculate up to BATCH_SIZE steps at a time
-# Adjust this value based on performance
-BATCH_SIZE = 1  # Calculate one step at a time for smooth animation
-
+# Progressive simulation - calculate one step at a time and update UI
 if st.session_state.initialized and st.session_state.simulation_running:
     if st.session_state.current_step < st.session_state.target_steps:
-        # Get current state
+        # Create a progress bar
+        progress_bar = st.progress(0)
+        
+        # Get starting state
         current_state = st.session_state.states[-1]
         
-        # Calculate next batch of steps
-        steps_to_calculate = min(BATCH_SIZE, st.session_state.target_steps - st.session_state.current_step)
-        
-        for _ in range(steps_to_calculate):
+        # Calculate all remaining time steps one by one
+        for step in range(st.session_state.current_step, st.session_state.target_steps):
             # Calculate next time step
-            next_step = st.session_state.current_step + 1
+            next_step = step + 1
             next_state, next_pauli, calc_time = calculate_step(current_state, next_step)
             
             # Store the results
@@ -220,27 +218,29 @@ if st.session_state.initialized and st.session_state.simulation_running:
             
             # Increment step counter
             st.session_state.current_step += 1
+            
+            # Update the plot with current progress
+            fig = plot_spacetime_plotly(
+                st.session_state.pauli_strings, 
+                total_time_steps=st.session_state.target_steps
+            )
+            
+            # Display the updated plot
+            plot_placeholder.plotly_chart(fig, use_container_width=True)
+            
+            # Update progress bar and status message
+            progress_value = st.session_state.current_step / st.session_state.target_steps
+            progress_bar.progress(progress_value)
+            status_placeholder.info(f"Calculating time step {st.session_state.current_step}/{st.session_state.target_steps} ({progress_value*100:.1f}%)")
+            
+            # Small sleep to allow UI to update (can be adjusted)
+            time.sleep(0.01)
         
-        # Update the plot with current progress
-        fig = plot_spacetime_plotly(
-            st.session_state.pauli_strings, 
-            total_time_steps=st.session_state.target_steps
-        )
-        
-        # Display the updated plot
-        plot_placeholder.plotly_chart(fig, use_container_width=True)
-        
-        # Show status message
-        progress = st.session_state.current_step / st.session_state.target_steps * 100
-        status_placeholder.info(f"Calculating time step {st.session_state.current_step}/{st.session_state.target_steps} ({progress:.1f}%)")
-        
-        # Rerun to continue the simulation if not complete
-        if st.session_state.current_step < st.session_state.target_steps:
-            st.rerun()
-        else:
-            st.session_state.simulation_running = False
-            st.session_state.simulation_complete = True
-            status_placeholder.success("Simulation complete!")
+        # Simulation complete
+        st.session_state.simulation_running = False
+        st.session_state.simulation_complete = True
+        progress_bar.empty()
+        status_placeholder.success("Simulation complete!")
     
     elif not st.session_state.simulation_complete:
         st.session_state.simulation_running = False
@@ -267,6 +267,3 @@ if not st.session_state.initialized:
     st.session_state.params_hash = current_hash
     st.session_state.simulation_running = True
     st.session_state.initialized = True
-    
-    # Force a rerun to start the simulation
-    st.rerun()
