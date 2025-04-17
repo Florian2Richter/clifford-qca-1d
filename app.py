@@ -197,9 +197,6 @@ def calculate_step(current_state, step_number):
 # Progressive simulation - calculate one step at a time and update UI
 if st.session_state.initialized and st.session_state.simulation_running:
     if st.session_state.current_step < st.session_state.target_steps:
-        # Create a progress bar
-        # progress_bar = st.progress(0)
-        
         # Get starting state
         current_state = st.session_state.states[-1]
         
@@ -233,20 +230,13 @@ if st.session_state.initialized and st.session_state.simulation_running:
                 # Display the updated plot
                 plot_placeholder.plotly_chart(fig, use_container_width=False)
             
-            # Update progress bar and status message
-            #progress_value = st.session_state.current_step / st.session_state.target_steps
-            #progress_bar.progress(progress_value)
-            #status_placeholder.info(f"Calculating time step {st.session_state.current_step}/{st.session_state.target_steps} ({progress_value*100:.1f}%)")
-            
             # Small sleep to allow UI to update (can be adjusted)
-            # For batch updates, we don't need to sleep between steps, only after updates
             if st.session_state.current_step % BATCH_SIZE == 0:
                 time.sleep(0.005)
         
         # Simulation complete
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
-        #progress_bar.empty()
         status_placeholder.success("Simulation complete!")
     
     elif not st.session_state.simulation_complete:

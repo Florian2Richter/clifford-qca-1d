@@ -33,29 +33,24 @@ def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
     
     cell_count = len(pauli_strings[0])
     
-    # Set total time steps (for fixed y-axis)
     if total_time_steps is None or total_time_steps < current_time_steps:
         total_time_steps = current_time_steps
     
-    # Convert Pauli strings to numeric data for calculated steps
     data = np.zeros((total_time_steps, cell_count), dtype=int)
     for t, s in enumerate(pauli_strings):
         data[t] = pauli_to_numeric(s)
     
-    # Define colorscale for Plotly (matching Matplotlib)
-    # Note: Plotly colorscales map values 0-1. We need to define boundaries.
     colorscale = [
-        [0.0, 'white'],   # I (corresponds to value 0)
+        [0.0, 'white'],
         [0.25, 'white'],
-        [0.25, '#008080'], # X (corresponds to value 1)
+        [0.25, '#008080'],
         [0.5, '#008080'],
-        [0.5, '#FF7F50'], # Z ‚(corresponds to value 2)
+        [0.5, '#FF7F50'],
         [0.75, '#FF7F50'],
-        [0.75, '#4A4A4A'], # Y (corresponds to value 3)
+        [0.75, '#4A4A4A'],
         [1.0, '#4A4A4A']
     ]
     
-    # Create the heatmap trace
     fig = go.Figure(data=go.Heatmap(
         z=data,
         x=list(range(cell_count)),
@@ -73,24 +68,22 @@ def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
             yanchor='top',
             y=1
         ),
-        # Custom hover text for only the calculated steps
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
         customdata=[[pauli_strings[y][x] if y < current_time_steps else 'I' 
                     for x in range(cell_count)] 
                     for y in range(total_time_steps)]
     ))
     
-    # Update layout with fixed axes
     fig.update_layout(
         title='1D Clifford QCA Spacetime Diagram',
         xaxis_title='Cell Position',
         yaxis_title='Time Step',
-        yaxis_autorange='reversed', # Time flows downwards
+        yaxis_autorange='reversed',
         xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
         yaxis=dict(tickmode='linear', dtick=max(1, total_time_steps // 15)),
         width=800,
         height=500,
-        autosize=False  # Enable autosizing
+        autosize=False
     )
     
     return fig
