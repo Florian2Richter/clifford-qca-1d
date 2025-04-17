@@ -164,6 +164,9 @@ plot_placeholder = st.empty()
 # Create a placeholder for status messages
 status_placeholder = st.empty()
 
+# Create a placeholder to display calculation time
+calc_time_placeholder = st.empty()
+
 # Calculate parameters hash to detect changes
 current_hash = get_params_hash(n, T_steps, local_rule, initial_state)
 
@@ -218,6 +221,9 @@ if st.session_state.initialized and st.session_state.simulation_running:
             
             # Increment step counter
             st.session_state.current_step += 1
+            
+            # Display calculation time
+            calc_time_placeholder.info(f"Last step calculation time: {calc_time*1000:.2f} ms")
             
             # Update the plot with current progress
             fig = plot_spacetime_plotly(
