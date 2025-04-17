@@ -10,8 +10,6 @@ import cProfile
 import pstats
 import io
 
-
-profiler = cProfile.Profile()
 # Set page configuration
 st.set_page_config(
     page_title="1D Clifford QCA Simulator",
@@ -20,8 +18,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Instantiate profiler
+profiler = cProfile.Profile()
+
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-17.3 (with profiling)**")
+st.sidebar.markdown("**App Version: 2025-04-17.3**")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -82,7 +83,7 @@ The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lat
 # Sidebar for simulation parameters
 st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
 n = st.sidebar.number_input("Number of cells", min_value=3, value=500, step=1)
-T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=250, step=1)
+T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=50, step=1)
 
 # Sidebar for local rule matrix input
 st.sidebar.markdown('<h3 class="sidebar-header">Local Rule Matrix (2x6 over F2)</h3>', unsafe_allow_html=True)
@@ -99,7 +100,6 @@ For example, the identity transformation would be:
 This leaves each cell's state unchanged as it only uses the identity matrix in the center block.
 </div>
 """, unsafe_allow_html=True)
-
 row1_input = st.sidebar.text_input("Row 1 (for A_left and A_center)", "1 0 1 1 0 1")
 row2_input = st.sidebar.text_input("Row 2 (for A_center and A_right)", "0 1 0 1 1 0")
 
@@ -131,18 +131,15 @@ st.sidebar.markdown('<h3 class="sidebar-header">Initial State</h3>', unsafe_allo
 init_option = st.sidebar.selectbox("Choose initial state:", ["Single active cell", "Random", "Manual"])
 
 def get_single_active_state(n):
-    # Create a state vector of length 2*n representing all I's,
-    # except for one X (i.e. (1,0)) at the center.
     state = np.zeros(2 * n, dtype=int)
     center = n // 2
-    state[2*center] = 1  # Set x-part for an X operator
+    state[2*center] = 1
     return state
 
 if init_option == "Single active cell":
     initial_state = get_single_active_state(n)
     st.sidebar.info("Using a single X operator at the center cell.")
 elif init_option == "Random":
-    # Generate a random Pauli string of length n from I, X, Z, Y.
     choices = ['I', 'X', 'Z', 'Y']
     random_pauli = ''.join(np.random.choice(choices, size=n))
     st.sidebar.info(f"Random initial state: {random_pauli}")
@@ -152,8 +149,7 @@ elif init_option == "Manual":
     if len(manual_pauli) != n:
         st.sidebar.error("Pauli string must be of length equal to the number of cells.")
         st.stop()
-    valid_chars = set("IXZY")
-    if any(ch not in valid_chars for ch in manual_pauli):
+    if any(ch not in set("IXZY") for ch in manual_pauli):
         st.sidebar.error("Invalid characters in Pauli string. Use only I, X, Z, Y.")
         st.stop()
     initial_state = pauli_string_to_state(manual_pauli)
@@ -163,16 +159,12 @@ else:
 # Build the global operator from the local rule
 global_operator = build_global_operator(n, local_rule)
 
-# Create a placeholder for the plot
+# Placeholders for plot and status
 plot_placeholder = st.empty()
-
-# Create a placeholder for status messages
 status_placeholder = st.empty()
 
-# Calculate parameters hash to detect changes
+# Detect parameter changes
 current_hash = get_params_hash(n, T_steps, local_rule, initial_state)
-
-# Reset simulation if parameters changed
 if current_hash != st.session_state.params_hash:
     st.session_state.params_hash = current_hash
     st.session_state.current_step = 0
@@ -187,91 +179,71 @@ if current_hash != st.session_state.params_hash:
 # Function to calculate one time step
 def calculate_step(current_state, step_number):
     start_time = time.time()
-    
-    # Calculate next state - use the stored global operator from session state
     next_state = mod2_matmul(st.session_state.global_operator, current_state) % 2
-    
-    # Convert to Pauli string
     next_pauli = vector_to_pauli_string(next_state)
-    
     end_time = time.time()
     calculation_time = end_time - start_time
-    
     return next_state, next_pauli, calculation_time
 
-profiler.enable()
-
-# Progressive simulation - calculate one step at a time and update UI
+# Progressive simulation with profiling
+BATCH_SIZE = 5
 if st.session_state.initialized and st.session_state.simulation_running:
     if st.session_state.current_step < st.session_state.target_steps:
-        # Get starting state
-        current_state = st.session_state.states[-1]
-        
-        # Define a batch size to update less frequently for better performance
-        BATCH_SIZE = 5  # Update the visualization every 5 steps
-        
-        # Calculate all remaining time steps one by one
+        # Start profiling the simulation loop
+        profiler.enable()
         for step in range(st.session_state.current_step, st.session_state.target_steps):
-            # Calculate next time step
             next_step = step + 1
-            next_state, next_pauli, calc_time = calculate_step(current_state, next_step)
-            
-            # Store the results
+            next_state, next_pauli, calc_time = calculate_step(st.session_state.states[-1], next_step)
             st.session_state.states.append(next_state.copy())
             st.session_state.pauli_strings.append(next_pauli)
-            
-            # Update current state for next iteration
-            current_state = next_state
-            
-            # Increment step counter
             st.session_state.current_step += 1
-            
-            # Update the plot only every BATCH_SIZE steps or on the final step
+
             if st.session_state.current_step % BATCH_SIZE == 0 or st.session_state.current_step == st.session_state.target_steps:
-                # Update the plot with current progress
                 fig = plot_spacetime_plotly(
-                    st.session_state.pauli_strings, 
+                    st.session_state.pauli_strings,
                     total_time_steps=st.session_state.target_steps
                 )
-                
-                # Display the updated plot
-                plot_placeholder.plotly_chart(fig, use_container_width=False)
-            
-            # Small sleep to allow UI to update (can be adjusted)
-            if st.session_state.current_step % BATCH_SIZE == 0:
+                plot_placeholder.plotly_chart(
+                    fig,
+                    use_container_width=False,
+                    key=f"progress_step_{st.session_state.current_step}"
+                )
                 time.sleep(0.005)
-        
-        # Simulation complete
+        # Stop profiling after loop
+        profiler.disable()
+
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
-    
     elif not st.session_state.simulation_complete:
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
 
-profiler.disable()
-# If simulation complete, just show the final plot
-if st.session_state.simulation_complete:
+# Final plot and profiling results\if st.session_state.simulation_complete:
     fig = plot_spacetime_plotly(st.session_state.pauli_strings)
-    plot_placeholder.plotly_chart(fig, use_container_width=False)
-    # Now show the profiler summary in the sidebar
+    plot_placeholder.plotly_chart(
+        fig,
+        use_container_width=False,
+        key="final_spacetime"
+    )
+
+    # Display profiling summary
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
-    ps.print_stats(10)     # top 10 functions by cumulative time
-
+    ps.print_stats(10)
     st.sidebar.markdown("### 🐢 Profiling Results")
     st.sidebar.text(s.getvalue())
 
-# For initial load, show empty plot
+# Initial load
 if not st.session_state.initialized:
-    # Initial state only - show first step
     initial_pauli = vector_to_pauli_string(initial_state)
     fig = plot_spacetime_plotly([initial_pauli], total_time_steps=T_steps)
-    plot_placeholder.plotly_chart(fig, use_container_width=False)
-    
-    # Start simulation
+    plot_placeholder.plotly_chart(
+        fig,
+        use_container_width=False,
+        key="initial_spacetime"
+    )
     st.session_state.pauli_strings = [initial_pauli]
     st.session_state.states = [initial_state.copy()]
     st.session_state.global_operator = global_operator
