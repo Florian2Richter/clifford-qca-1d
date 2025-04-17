@@ -15,16 +15,32 @@ def pauli_to_numeric(pauli_str):
     numeric = [mapping.get(ch, 0) for ch in pauli_str]
     return np.array(numeric)
 
-# New function using Plotly
-def plot_spacetime_plotly(pauli_strings):
-    """Plot the spacetime diagram using Plotly for interactivity."""
-    time_steps = len(pauli_strings)
-    if time_steps == 0:
+def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
+    """
+    Plot the spacetime diagram using Plotly for interactivity.
+    
+    Parameters:
+    -----------
+    pauli_strings : list of strings
+        List of Pauli strings representing the state at each calculated time step.
+    total_time_steps : int, optional
+        Total number of time steps to show in the plot. If None, uses len(pauli_strings).
+        This is used for progressive visualization to keep axes consistent.
+    """
+    current_time_steps = len(pauli_strings)
+    if current_time_steps == 0:
         return go.Figure()
+    
     cell_count = len(pauli_strings[0])
     
-    # Convert Pauli strings to numeric data
-    data = np.array([pauli_to_numeric(s) for s in pauli_strings])
+    # Set total time steps (for fixed y-axis)
+    if total_time_steps is None or total_time_steps < current_time_steps:
+        total_time_steps = current_time_steps
+    
+    # Convert Pauli strings to numeric data for calculated steps
+    data = np.zeros((total_time_steps, cell_count), dtype=int)
+    for t, s in enumerate(pauli_strings):
+        data[t] = pauli_to_numeric(s)
     
     # Define colorscale for Plotly (matching Matplotlib)
     # Note: Plotly colorscales map values 0-1. We need to define boundaries.
@@ -43,7 +59,7 @@ def plot_spacetime_plotly(pauli_strings):
     fig = go.Figure(data=go.Heatmap(
         z=data,
         x=list(range(cell_count)),
-        y=list(range(time_steps)),
+        y=list(range(total_time_steps)),
         colorscale=colorscale,
         zmin=0,
         zmax=3,
@@ -57,23 +73,35 @@ def plot_spacetime_plotly(pauli_strings):
             yanchor='top',
             y=1
         ),
-        # Custom hover text
+        # Custom hover text for only the calculated steps
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
-        customdata=[[pauli_strings[y][x] for x in range(cell_count)] for y in range(time_steps)]
+        customdata=[[pauli_strings[y][x] if y < current_time_steps else 'I' 
+                    for x in range(cell_count)] 
+                    for y in range(total_time_steps)]
     ))
     
-    # Update layout
+    # Add progress indicator if still calculating
+    if current_time_steps < total_time_steps:
+        progress_pct = int(100 * current_time_steps / total_time_steps)
+        fig.add_annotation(
+            text=f"Calculating: {current_time_steps}/{total_time_steps} steps ({progress_pct}%)",
+            xref="paper", yref="paper",
+            x=0.5, y=1.05,
+            showarrow=False,
+            font=dict(size=14, color="red")
+        )
+    
+    # Update layout with fixed axes
     fig.update_layout(
-        title='1D Clifford QCA Spacetime Diagram (Plotly)',
+        title='1D Clifford QCA Spacetime Diagram',
         xaxis_title='Cell Position',
         yaxis_title='Time Step',
         yaxis_autorange='reversed', # Time flows downwards
         xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
-        yaxis=dict(tickmode='linear', dtick=max(1, time_steps // 15)),
+        yaxis=dict(tickmode='linear', dtick=max(1, total_time_steps // 15)),
         width=800,
         height=500,
         autosize=True  # Enable autosizing
     )
-    
     
     return fig

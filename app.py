@@ -1,9 +1,11 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-from qca.core import build_global_operator, simulate_QCA, pauli_string_to_state
+from qca.core import build_global_operator, simulate_QCA, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
 from qca.visualization import pauli_to_numeric, plot_spacetime_plotly
 from matplotlib.colors import ListedColormap
+import time
+import hashlib
 
 # Set page configuration
 st.set_page_config(
@@ -43,6 +45,23 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Function to create a hash of all parameters to detect changes
+def get_params_hash(n, T_steps, local_rule, initial_state):
+    hash_str = f"{n}_{T_steps}_{local_rule.tobytes().hex()}_{initial_state.tobytes().hex()}"
+    return hashlib.md5(hash_str.encode()).hexdigest()
+
+# Initialize session state for progressive simulation
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = False
+    st.session_state.current_step = 0
+    st.session_state.pauli_strings = []
+    st.session_state.states = []
+    st.session_state.global_operator = None
+    st.session_state.params_hash = ""
+    st.session_state.target_steps = 0
+    st.session_state.simulation_running = False
+    st.session_state.simulation_complete = False
 
 # Main title
 st.markdown('<h1 class="main-header">1D Clifford QCA Simulator</h1>', unsafe_allow_html=True)
@@ -136,21 +155,118 @@ elif init_option == "Manual":
 else:
     initial_state = get_single_active_state(n)
 
-# Build the global operator from the local rule.
+# Build the global operator from the local rule
 global_operator = build_global_operator(n, local_rule)
 
-# Run the simulation.
-states, pauli_strings = simulate_QCA(n, T_steps, initial_state, global_operator)
+# Create a placeholder for the plot
+plot_placeholder = st.empty()
 
-# Display the spacetime diagram using Plotly
-st.markdown('<h2 class="sub-header">Spacetime Diagram</h2>', unsafe_allow_html=True)
-st.markdown("""
-<div class="description">
-The diagram shows the evolution of Pauli operators (I, X, Z, Y) over time in the quantum cellular automaton. You can zoom, pan, and hover over cells.
-</div>
-""", unsafe_allow_html=True)
+# Create a placeholder for status messages
+status_placeholder = st.empty()
 
-# Create the plot using the Plotly function
-fig = plot_spacetime_plotly(pauli_strings)
-# Display the Plotly figure using st.plotly_chart
-st.plotly_chart(fig, use_container_width=True)
+# Calculate parameters hash to detect changes
+current_hash = get_params_hash(n, T_steps, local_rule, initial_state)
+
+# Reset simulation if parameters changed
+if current_hash != st.session_state.params_hash:
+    st.session_state.params_hash = current_hash
+    st.session_state.current_step = 0
+    st.session_state.pauli_strings = [vector_to_pauli_string(initial_state)]
+    st.session_state.states = [initial_state.copy()]
+    st.session_state.global_operator = global_operator
+    st.session_state.target_steps = T_steps
+    st.session_state.simulation_running = True
+    st.session_state.simulation_complete = False
+    st.session_state.initialized = True
+
+# Function to calculate one time step
+def calculate_step(current_state, step_number):
+    start_time = time.time()
+    
+    # Calculate next state
+    next_state = mod2_matmul(global_operator, current_state) % 2
+    
+    # Convert to Pauli string
+    next_pauli = vector_to_pauli_string(next_state)
+    
+    end_time = time.time()
+    calculation_time = end_time - start_time
+    
+    return next_state, next_pauli, calculation_time
+
+# Progressive simulation - calculate up to BATCH_SIZE steps at a time
+# Adjust this value based on performance
+BATCH_SIZE = 1  # Calculate one step at a time for smooth animation
+
+if st.session_state.initialized and st.session_state.simulation_running:
+    if st.session_state.current_step < st.session_state.target_steps:
+        # Get current state
+        current_state = st.session_state.states[-1]
+        
+        # Calculate next batch of steps
+        steps_to_calculate = min(BATCH_SIZE, st.session_state.target_steps - st.session_state.current_step)
+        
+        for _ in range(steps_to_calculate):
+            # Calculate next time step
+            next_step = st.session_state.current_step + 1
+            next_state, next_pauli, calc_time = calculate_step(current_state, next_step)
+            
+            # Store the results
+            st.session_state.states.append(next_state.copy())
+            st.session_state.pauli_strings.append(next_pauli)
+            
+            # Update current state for next iteration
+            current_state = next_state
+            
+            # Increment step counter
+            st.session_state.current_step += 1
+        
+        # Update the plot with current progress
+        fig = plot_spacetime_plotly(
+            st.session_state.pauli_strings, 
+            total_time_steps=st.session_state.target_steps
+        )
+        
+        # Display the updated plot
+        plot_placeholder.plotly_chart(fig, use_container_width=True)
+        
+        # Show status message
+        progress = st.session_state.current_step / st.session_state.target_steps * 100
+        status_placeholder.info(f"Calculating time step {st.session_state.current_step}/{st.session_state.target_steps} ({progress:.1f}%)")
+        
+        # Rerun to continue the simulation if not complete
+        if st.session_state.current_step < st.session_state.target_steps:
+            st.experimental_rerun()
+        else:
+            st.session_state.simulation_running = False
+            st.session_state.simulation_complete = True
+            status_placeholder.success("Simulation complete!")
+    
+    elif not st.session_state.simulation_complete:
+        st.session_state.simulation_running = False
+        st.session_state.simulation_complete = True
+        status_placeholder.success("Simulation complete!")
+
+# If simulation complete, just show the final plot
+if st.session_state.simulation_complete:
+    fig = plot_spacetime_plotly(st.session_state.pauli_strings)
+    plot_placeholder.plotly_chart(fig, use_container_width=True)
+
+# For initial load, show empty plot
+if not st.session_state.initialized:
+    # Initial state only - show first step
+    initial_pauli = vector_to_pauli_string(initial_state)
+    fig = plot_spacetime_plotly([initial_pauli], total_time_steps=T_steps)
+    plot_placeholder.plotly_chart(fig, use_container_width=True)
+    
+    # Start simulation
+    st.session_state.pauli_strings = [initial_pauli]
+    st.session_state.states = [initial_state.copy()]
+    st.session_state.global_operator = global_operator
+    st.session_state.target_steps = T_steps
+    st.session_state.params_hash = current_hash
+    st.session_state.simulation_running = True
+    st.session_state.initialized = True
+    
+    # Force a rerun to start the simulation
+    st.experimental_rerun()
