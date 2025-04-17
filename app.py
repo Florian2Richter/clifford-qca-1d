@@ -183,8 +183,8 @@ if current_hash != st.session_state.params_hash:
 def calculate_step(current_state, step_number):
     start_time = time.time()
     
-    # Calculate next state
-    next_state = mod2_matmul(global_operator, current_state) % 2
+    # Calculate next state - use the stored global operator from session state
+    next_state = mod2_matmul(st.session_state.global_operator, current_state) % 2
     
     # Convert to Pauli string
     next_pauli = vector_to_pauli_string(next_state)
