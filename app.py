@@ -234,7 +234,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
             status_placeholder.info(f"Calculating time step {st.session_state.current_step}/{st.session_state.target_steps} ({progress_value*100:.1f}%)")
             
             # Small sleep to allow UI to update (can be adjusted)
-            time.sleep(0.01)
+            time.sleep(0.001)
         
         # Simulation complete
         st.session_state.simulation_running = False
