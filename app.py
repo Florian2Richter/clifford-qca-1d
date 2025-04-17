@@ -164,9 +164,6 @@ plot_placeholder = st.empty()
 # Create a placeholder for status messages
 status_placeholder = st.empty()
 
-# Create a placeholder to display calculation time
-calc_time_placeholder = st.empty()
-
 # Calculate parameters hash to detect changes
 current_hash = get_params_hash(n, T_steps, local_rule, initial_state)
 
@@ -206,6 +203,9 @@ if st.session_state.initialized and st.session_state.simulation_running:
         # Get starting state
         current_state = st.session_state.states[-1]
         
+        # Define a batch size to update less frequently for better performance
+        BATCH_SIZE = 5  # Update the visualization every 5 steps
+        
         # Calculate all remaining time steps one by one
         for step in range(st.session_state.current_step, st.session_state.target_steps):
             # Calculate next time step
@@ -222,17 +222,16 @@ if st.session_state.initialized and st.session_state.simulation_running:
             # Increment step counter
             st.session_state.current_step += 1
             
-            # Display calculation time
-            calc_time_placeholder.info(f"Last step calculation time: {calc_time*1000:.2f} ms")
-            
-            # Update the plot with current progress
-            fig = plot_spacetime_plotly(
-                st.session_state.pauli_strings, 
-                total_time_steps=st.session_state.target_steps
-            )
-            
-            # Display the updated plot
-            plot_placeholder.plotly_chart(fig, use_container_width=False)
+            # Update the plot only every BATCH_SIZE steps or on the final step
+            if st.session_state.current_step % BATCH_SIZE == 0 or st.session_state.current_step == st.session_state.target_steps:
+                # Update the plot with current progress
+                fig = plot_spacetime_plotly(
+                    st.session_state.pauli_strings, 
+                    total_time_steps=st.session_state.target_steps
+                )
+                
+                # Display the updated plot
+                plot_placeholder.plotly_chart(fig, use_container_width=False)
             
             # Update progress bar and status message
             #progress_value = st.session_state.current_step / st.session_state.target_steps
@@ -240,7 +239,9 @@ if st.session_state.initialized and st.session_state.simulation_running:
             #status_placeholder.info(f"Calculating time step {st.session_state.current_step}/{st.session_state.target_steps} ({progress_value*100:.1f}%)")
             
             # Small sleep to allow UI to update (can be adjusted)
-            time.sleep(0.005)
+            # For batch updates, we don't need to sleep between steps, only after updates
+            if st.session_state.current_step % BATCH_SIZE == 0:
+                time.sleep(0.005)
         
         # Simulation complete
         st.session_state.simulation_running = False
