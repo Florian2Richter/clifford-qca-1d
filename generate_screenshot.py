@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from qca.core import build_global_operator, simulate_QCA, pauli_string_to_state
 from qca.visualization import plot_spacetime
 
 # Set up simulation parameters
-n = 100  # number of cells
-T_steps = 50  # number of time steps
+n = 500  # number of cells
+T_steps = 250  # number of time steps
 
 # Set up the local rule matrix (example rule)
 local_rule = np.array([
@@ -24,5 +25,11 @@ states, pauli_strings = simulate_QCA(n, T_steps, initial_state, global_operator)
 
 # Create and save the plot
 fig = plot_spacetime(pauli_strings, n, return_fig=True)
-fig.savefig('docs/images/app_screenshot.png', dpi=300, bbox_inches='tight')
+
+# Use absolute path
+output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'florian2richter.github.io', 'assets', 'images')
+os.makedirs(output_dir, exist_ok=True)
+output_path = os.path.join(output_dir, 'qca_plot.png')
+print(f"Saving to {output_path}")
+fig.savefig(output_path, dpi=300, bbox_inches='tight')
 plt.close(fig) 
