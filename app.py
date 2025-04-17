@@ -226,7 +226,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
             )
             
             # Display the updated plot
-            plot_placeholder.plotly_chart(fig, use_container_width=True)
+            plot_placeholder.plotly_chart(fig, use_container_width=False)
             
             # Update progress bar and status message
             progress_value = st.session_state.current_step / st.session_state.target_steps
@@ -250,14 +250,14 @@ if st.session_state.initialized and st.session_state.simulation_running:
 # If simulation complete, just show the final plot
 if st.session_state.simulation_complete:
     fig = plot_spacetime_plotly(st.session_state.pauli_strings)
-    plot_placeholder.plotly_chart(fig, use_container_width=True)
+    plot_placeholder.plotly_chart(fig, use_container_width=False)
 
 # For initial load, show empty plot
 if not st.session_state.initialized:
     # Initial state only - show first step
     initial_pauli = vector_to_pauli_string(initial_state)
     fig = plot_spacetime_plotly([initial_pauli], total_time_steps=T_steps)
-    plot_placeholder.plotly_chart(fig, use_container_width=True)
+    plot_placeholder.plotly_chart(fig, use_container_width=False)
     
     # Start simulation
     st.session_state.pauli_strings = [initial_pauli]
