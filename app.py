@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.15 (streamlined)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.16 (250 time steps default)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -63,7 +63,7 @@ def setup_ui_elements():
     # Sidebar for simulation parameters
     st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
     n = st.sidebar.number_input("Number of cells", min_value=3, value=500, step=1)
-    T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=50, step=1)
+    T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=250, step=1)
     
     # Local rule matrix input
     st.sidebar.markdown('<h3 class="sidebar-header">Local Rule Matrix (2x6 over F2)</h3>', unsafe_allow_html=True)
