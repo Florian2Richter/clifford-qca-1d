@@ -73,10 +73,21 @@ def make_empty_figure(cell_count, total_time_steps):
         [1.0, '#4A4A4A']
     ]
     
-    # Create the heatmap
+    # Performance optimization: Reduce the number of cells actually displayed
+    # by showing a representative subset for large cell counts
+    display_cell_count = cell_count
+    if cell_count > 1000:
+        # For very large cell counts, show a reduced version
+        display_step = max(1, cell_count // 1000)
+        display_indices = list(range(0, cell_count, display_step))
+        display_cell_count = len(display_indices)
+        data = data[:, display_indices]
+        customdata = [[row[i] for i in display_indices] for row in customdata]
+    
+    # Create the heatmap with optimized performance settings
     fig = go.Figure(data=go.Heatmap(
         z=data,
-        x=list(range(cell_count)),
+        x=list(range(display_cell_count)),
         y=list(range(total_time_steps)),
         colorscale=colorscale,
         zmin=0,
@@ -92,21 +103,73 @@ def make_empty_figure(cell_count, total_time_steps):
             y=1
         ),
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
-        customdata=customdata
+        customdata=customdata,
+        # Performance optimizations
+        hoverongaps=False,  # Don't render hover effects for gaps
+        hoverlabel=dict(font=dict(size=10)),  # Smaller hover labels
+        zhoverformat='.0f'  # Simplify hover data format
     ))
     
-    # Set layout
+    # Set layout with performance optimizations
     fig.update_layout(
         title='1D Clifford QCA Spacetime Diagram',
         xaxis_title='Cell Position',
         yaxis_title='Time Step',
         yaxis_autorange='reversed',
-        xaxis=dict(tickmode='linear', dtick=max(1, cell_count // 15)),
-        yaxis=dict(tickmode='linear', dtick=max(1, total_time_steps // 15)),
+        xaxis=dict(
+            tickmode='linear', 
+            dtick=max(1, display_cell_count // 10),  # Fewer ticks
+            constrain='domain'
+        ),
+        yaxis=dict(
+            tickmode='linear', 
+            dtick=max(1, total_time_steps // 10),  # Fewer ticks
+            constrain='domain'
+        ),
         width=800,
         height=500,
-        autosize=False
+        autosize=False,
+        # Performance optimizations
+        uirevision=True,  # Maintain UI state during updates
+        hovermode='closest',    # Simplify hover behavior
+        hoverdistance=10,       # Limit hover distance detection
+        dragmode=False,         # Disable drag interactions
+        modebar=dict(
+            orientation='v',
+            bgcolor='rgba(0,0,0,0)'
+        ),
+        margin=dict(l=60, r=30, t=50, b=50),
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)'    # Transparent plot area
     )
+    
+    # Disable unnecessary interactivity to improve performance
+    config = {
+        'displayModeBar': True,
+        'scrollZoom': False,
+        'displaylogo': False,
+        'responsive': True,
+        'staticPlot': False,  # Setting to True would disable all interactivity
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': 'qca_simulation',
+            'height': 500,
+            'width': 800,
+            'scale': 1
+        },
+        'modeBarButtonsToRemove': [
+            'select2d', 'lasso2d', 'autoScale2d', 'resetScale2d',
+            'hoverClosestCartesian', 'hoverCompareCartesian',
+            'toggleSpikelines', 'toggleHover', 'resetViewMapbox'
+        ]
+    }
+    
+    # Simplify axes
+    fig.update_xaxes(showgrid=False, zeroline=False, showspikes=False)
+    fig.update_yaxes(showgrid=False, zeroline=False, showspikes=False)
+    
+    # Attach the config to the figure for use in Streamlit
+    fig._config = config
     
     return fig
 

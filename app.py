@@ -18,9 +18,9 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.18 (rendering optimization, BATCH_SIZE=5)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.1 (optimized rendering)**")
     
-    # Custom CSS for better styling
+    # Custom CSS for better styling and performance optimizations
     st.markdown("""
     <style>
         .main-header { font-size:2.5rem; color:#1E88E5; text-align:center; margin-bottom:1rem; }
@@ -28,6 +28,10 @@ def setup_page_config():
         .description { font-size:1rem; color:#616161; margin-bottom:1.5rem; }
         .sidebar-header { font-size:24px !important; font-weight:bold !important; margin-top:1rem !important; }
         .stMetric { background-color:#f0f2f6; padding:10px; border-radius:5px; }
+        /* Rendering optimizations */
+        .element-container { margin-bottom: 0.5rem !important; }
+        .stPlotlyChart > div { margin: 0 !important; padding: 0 !important; }
+        iframe { border: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -204,7 +208,8 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                 st.session_state.fig,
                 use_container_width=False,
                 config=getattr(st.session_state.fig, '_config', None),
-                key=f"init_plot_{current_hash[:8]}"
+                key=f"init_plot_{current_hash[:8]}",
+                theme=None  # Disable theming for better performance
             )
             render_time = time.time() - render_start
             st.session_state.timing_metrics['rendering'].append(render_time)
@@ -243,7 +248,8 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                     st.session_state.fig,
                     use_container_width=False,
                     config=getattr(st.session_state.fig, '_config', None),
-                    key=f"step_{st.session_state.current_step}_{current_hash[:8]}"
+                    key=f"step_{st.session_state.current_step}_{current_hash[:8]}",
+                    theme=None  # Disable theming for better performance
                 )
                 render_time = time.time() - render_start
                 st.session_state.timing_metrics['rendering'].append(render_time)
@@ -362,7 +368,8 @@ def display_results(n, plot_placeholder, current_hash):
         st.session_state.fig,
         use_container_width=False,
         config=getattr(st.session_state.fig, '_config', None),
-        key=f"final_plot_{current_hash[:8]}"
+        key=f"final_plot_{current_hash[:8]}",
+        theme=None  # Disable theming for better performance
     )
     render_time = time.time() - render_start
     if 'timing_metrics' in st.session_state:
@@ -403,7 +410,8 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
         st.session_state.fig,
         use_container_width=False,
         config=getattr(st.session_state.fig, '_config', None),
-        key=f"initial_load_{current_hash[:8]}"
+        key=f"initial_load_{current_hash[:8]}",
+        theme=None  # Disable theming for better performance
     )
     render_time = time.time() - render_start
     st.session_state.timing_metrics['rendering'].append(render_time)
@@ -430,6 +438,12 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
     st.session_state.simulation_running = True
     st.session_state.initialized = True
 
+# Add a decorator for caching
+@st.cache_data(ttl=900, show_spinner=False)
+def build_cached_global_operator(n, local_rule):
+    """Cached version of build_global_operator to improve performance."""
+    return build_global_operator(n, local_rule)
+
 def main():
     """Main function to run the application."""
     # Setup page configuration
@@ -444,8 +458,8 @@ def main():
     # Setup UI elements
     n, T_steps, local_rule, initial_state, plot_placeholder, status_placeholder = setup_ui_elements()
     
-    # Build the global operator
-    global_operator = build_global_operator(n, local_rule)
+    # Build the global operator (use cached version for better performance)
+    global_operator = build_cached_global_operator(n, local_rule)
     
     # Calculate parameters hash
     current_hash = get_params_hash(n, T_steps, local_rule, initial_state)
