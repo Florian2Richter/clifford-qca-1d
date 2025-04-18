@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
-from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure
+from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure, fast_update_figure
 import hashlib
 import time
 
@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.12 (detailed profiling)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.14 (ultra-fast updates)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -192,6 +192,9 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
             'plot_update_detail': []  # Added for detailed metrics
         }
     
+    # Add a toggle for fast updates
+    use_fast_updates = True
+    
     metrics_placeholder = st.empty()
     plot_detail_metrics = st.empty()  # New placeholder for detailed plot update metrics
     
@@ -227,8 +230,15 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                     st.session_state.current_step == st.session_state.target_steps):
                 # Measure update time with detailed metrics
                 update_start = time.time()
-                st.session_state.fig, update_details = update_figure(st.session_state.fig, 
-                                                                    st.session_state.pauli_strings)
+                
+                # Use the faster update method
+                if use_fast_updates:
+                    st.session_state.fig, update_details = fast_update_figure(st.session_state.fig, 
+                                                                        st.session_state.pauli_strings)
+                else:
+                    st.session_state.fig, update_details = update_figure(st.session_state.fig, 
+                                                                        st.session_state.pauli_strings)
+                    
                 update_time = time.time() - update_start
                 st.session_state.timing_metrics['plot_update'].append(update_time)
                 st.session_state.timing_metrics['plot_update_detail'].append(update_details)
@@ -352,7 +362,7 @@ def display_results(n, plot_placeholder, current_hash):
     if "fig" not in st.session_state or st.session_state.fig is None:
         st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
         update_start = time.time()
-        st.session_state.fig, update_details = update_figure(st.session_state.fig, st.session_state.pauli_strings)
+        st.session_state.fig, update_details = fast_update_figure(st.session_state.fig, st.session_state.pauli_strings)
         update_time = time.time() - update_start
         if 'timing_metrics' in st.session_state:
             st.session_state.timing_metrics['plot_update'].append(update_time)
@@ -393,7 +403,7 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
     
     # Measure update time
     update_start = time.time()
-    st.session_state.fig, update_details = update_figure(st.session_state.fig, [initial_pauli])
+    st.session_state.fig, update_details = fast_update_figure(st.session_state.fig, [initial_pauli])
     update_time = time.time() - update_start
     st.session_state.timing_metrics['plot_update'].append(update_time)
     st.session_state.timing_metrics['plot_update_detail'].append(update_details)

@@ -163,10 +163,81 @@ def update_figure(fig, pauli_strings):
     
     # Measure the actual figure update time
     update_start = time.time()
-    fig.data[0].z = data
-    fig.data[0].customdata = customdata
+    
+    # Use a more efficient update method - update all properties at once
+    # instead of multiple property assignments
+    fig.update_traces(
+        z=data,
+        customdata=customdata,
+        selector=dict(type='heatmap')
+    )
+    
     timing['figure_update'] = time.time() - update_start
     
+    timing['total'] = time.time() - total_start
+    
+    return fig, timing
+
+def fast_update_figure(fig, pauli_strings):
+    """
+    Ultra-optimized version of update_figure that minimizes overhead.
+    This version uses the most efficient Plotly update method available.
+    
+    Parameters:
+    -----------
+    fig : plotly.graph_objects.Figure
+        The existing figure to update.
+    pauli_strings : list of strings
+        List of Pauli strings representing the state at each calculated time step.
+    
+    Returns:
+    --------
+    The updated figure (same object reference) and timing dictionary.
+    """
+    timing = {}
+    total_start = time.time()
+    
+    # Get dimensions
+    current_time_steps = len(pauli_strings)
+    if current_time_steps == 0:
+        return fig, {'total': 0}
+    
+    cell_count = len(pauli_strings[0])
+    total_time_steps = len(fig.data[0].z)
+    
+    # Measure array allocation and conversion time combined
+    conversion_start = time.time()
+    if current_time_steps > 0:
+        # Convert strings to numeric data
+        numeric_data = pauli_strings_to_numeric(pauli_strings)
+        
+        # Prepare the full data array only if needed
+        max_steps = min(current_time_steps, total_time_steps)
+        z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+        z_data[:max_steps] = numeric_data[:max_steps]
+    else:
+        z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+    timing['data_preparation'] = time.time() - conversion_start
+    
+    # Measure customdata creation time
+    customdata_start = time.time()
+    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
+    for t, s in enumerate(pauli_strings):
+        if t < total_time_steps:
+            customdata[t] = list(s)
+    timing['customdata_creation'] = time.time() - customdata_start
+    
+    # Measure the actual figure update time
+    update_start = time.time()
+    
+    # Use the fastest update method - direct data access through restyle
+    # this avoids any JSON serialization overhead in Plotly's update_traces method
+    fig.plotly_restyle(
+        {'z': [z_data], 'customdata': [customdata]},
+        trace_indexes=[0]
+    )
+    
+    timing['figure_update'] = time.time() - update_start
     timing['total'] = time.time() - total_start
     
     return fig, timing
