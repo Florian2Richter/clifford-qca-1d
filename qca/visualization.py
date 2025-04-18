@@ -73,22 +73,10 @@ def make_empty_figure(cell_count, total_time_steps):
         [1.0, '#4A4A4A']
     ]
     
-    # Performance optimization: Reduce the number of cells actually displayed
-    # by showing a representative subset for large cell counts
-    display_cell_count = cell_count
-    display_indices = None
-    if cell_count > 1000:
-        # For very large cell counts, show a reduced version
-        display_step = max(1, cell_count // 1000)
-        display_indices = list(range(0, cell_count, display_step))
-        display_cell_count = len(display_indices)
-        data = data[:, display_indices]
-        customdata = [[row[i] for i in display_indices] for row in customdata]
-    
     # Create the heatmap with optimized performance settings
     fig = go.Figure(data=go.Heatmap(
         z=data,
-        x=list(range(display_cell_count)),
+        x=list(range(cell_count)),
         y=list(range(total_time_steps)),
         colorscale=colorscale,
         zmin=0,
@@ -119,7 +107,7 @@ def make_empty_figure(cell_count, total_time_steps):
         yaxis_autorange='reversed',
         xaxis=dict(
             tickmode='linear', 
-            dtick=max(1, display_cell_count // 10),  # Fewer ticks
+            dtick=max(1, cell_count // 10),  # Fewer ticks
             constrain='domain'
         ),
         yaxis=dict(
@@ -172,10 +160,6 @@ def make_empty_figure(cell_count, total_time_steps):
     # Attach the config to the figure for use in Streamlit
     fig._config = config
     
-    # Store downsampling information for use in update_figure
-    fig._original_cell_count = cell_count
-    fig._display_indices = display_indices
-    
     return fig
 
 def update_figure(fig, pauli_strings):
@@ -205,10 +189,6 @@ def update_figure(fig, pauli_strings):
     cell_count = len(pauli_strings[0])
     total_time_steps = len(fig.data[0].z)
     
-    # Check if we need to handle downsampling
-    display_indices = getattr(fig, '_display_indices', None)
-    is_downsampled = display_indices is not None
-    
     # Measure array allocation and conversion time combined
     conversion_start = time.time()
     if current_time_steps > 0:
@@ -217,50 +197,19 @@ def update_figure(fig, pauli_strings):
         
         # Prepare the full data array only if needed
         max_steps = min(current_time_steps, total_time_steps)
-        
-        if is_downsampled:
-            # Handle downsampled data - create z_data with the right dimensions
-            display_cell_count = len(display_indices)
-            z_data = np.zeros((total_time_steps, display_cell_count), dtype=np.int8)
-            
-            # Process only the cells that are actually displayed
-            for i, idx in enumerate(display_indices):
-                if idx < cell_count:
-                    z_data[:max_steps, i] = numeric_data[:max_steps, idx]
-        else:
-            # Use full data - standard case
-            z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
-            z_data[:max_steps] = numeric_data[:max_steps]
+        z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+        z_data[:max_steps] = numeric_data[:max_steps]
     else:
-        # Empty case
-        if is_downsampled:
-            display_cell_count = len(display_indices)
-            z_data = np.zeros((total_time_steps, display_cell_count), dtype=np.int8)
-        else:
-            z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+        z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
     
     timing['data_preparation'] = time.time() - conversion_start
     
     # Measure customdata creation time
     customdata_start = time.time()
-    
-    if is_downsampled:
-        # Create customdata for downsampled visualization
-        display_cell_count = len(display_indices)
-        customdata = [['I'] * display_cell_count for _ in range(total_time_steps)]
-        
-        # Only populate displayed cells
-        for t, s in enumerate(pauli_strings):
-            if t < total_time_steps:
-                for i, idx in enumerate(display_indices):
-                    if idx < len(s):
-                        customdata[t][i] = s[idx]
-    else:
-        # Standard customdata creation
-        customdata = [['I'] * cell_count for _ in range(total_time_steps)]
-        for t, s in enumerate(pauli_strings):
-            if t < total_time_steps:
-                customdata[t] = list(s)
+    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
+    for t, s in enumerate(pauli_strings):
+        if t < total_time_steps:
+            customdata[t] = list(s)
     
     timing['customdata_creation'] = time.time() - customdata_start
     

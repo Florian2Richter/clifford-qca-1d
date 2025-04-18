@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.2 (fixed rendering with downsampling)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.3 (simplified rendering)**")
     
     # Custom CSS for better styling and performance optimizations
     st.markdown("""
@@ -203,12 +203,6 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
         # Create the figure once on first batch
         if st.session_state.fig is None:
             st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
-            
-            # Display downsampling info if active
-            display_indices = getattr(st.session_state.fig, '_display_indices', None)
-            if display_indices is not None:
-                display_cell_count = len(display_indices)
-                st.info(f"➡️ Visualization downsampled: Showing {display_cell_count} of {n} cells for better performance")
             
             render_start = time.time()
             plot_placeholder.plotly_chart(
