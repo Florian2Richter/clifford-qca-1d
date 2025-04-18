@@ -1,14 +1,16 @@
 import numpy as np
 import plotly.graph_objects as go
 
+# Global constants for better performance
+PAULI_MAPPING = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
+
 def pauli_to_numeric(pauli_str):
     """
     Convert a Pauli string (e.g., "IXZY...") into an array of numeric codes:
       I -> 0, X -> 1, Z -> 2, Y -> 3.
     Returns a numpy array of shape (len(pauli_str),).
     """
-    mapping = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
-    numeric = [mapping.get(ch, 0) for ch in pauli_str]
+    numeric = [PAULI_MAPPING.get(ch, 0) for ch in pauli_str]
     return np.array(numeric)
 
 def make_empty_figure(cell_count, total_time_steps):
@@ -103,14 +105,11 @@ def update_figure(fig, pauli_strings):
     # Always update the entire z data array for consistency
     data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
     
-    # Convert the Pauli strings to numeric values
-    mapping = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
-    
     # Fill in all available time steps
     for t, s in enumerate(pauli_strings):
         if t < total_time_steps:
             for i, ch in enumerate(s):
-                data[t, i] = mapping.get(ch, 0)
+                data[t, i] = PAULI_MAPPING.get(ch, 0)
     
     # Create customdata with the same approach
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
