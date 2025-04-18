@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.10 (optimized lookup)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.11 (vectorized conversion)**")
     
     # Custom CSS for better styling
     st.markdown("""

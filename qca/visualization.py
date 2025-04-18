@@ -13,6 +13,37 @@ def pauli_to_numeric(pauli_str):
     numeric = [PAULI_MAPPING.get(ch, 0) for ch in pauli_str]
     return np.array(numeric)
 
+def pauli_strings_to_numeric(pauli_strings):
+    """
+    Vectorized conversion of multiple Pauli strings to numeric arrays.
+    
+    Parameters:
+    -----------
+    pauli_strings : list of strings
+        List of Pauli strings to convert.
+        
+    Returns:
+    --------
+    np.ndarray of shape (len(pauli_strings), len(pauli_strings[0]))
+    """
+    if not pauli_strings:
+        return np.array([])
+    
+    n_strings = len(pauli_strings)
+    string_len = len(pauli_strings[0])
+    
+    # Pre-allocate the result array
+    result = np.zeros((n_strings, string_len), dtype=np.int8)
+    
+    # Create a character array from the strings
+    char_array = np.array([list(s) for s in pauli_strings])
+    
+    # Vectorized mapping using NumPy
+    for char, value in PAULI_MAPPING.items():
+        result[char_array == char] = value
+    
+    return result
+
 def make_empty_figure(cell_count, total_time_steps):
     """
     Create an empty plotly figure with the heatmap structure but initialized with all 'I' operators.
@@ -105,11 +136,14 @@ def update_figure(fig, pauli_strings):
     # Always update the entire z data array for consistency
     data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
     
-    # Fill in all available time steps
-    for t, s in enumerate(pauli_strings):
-        if t < total_time_steps:
-            for i, ch in enumerate(s):
-                data[t, i] = PAULI_MAPPING.get(ch, 0)
+    # Use vectorized conversion for all time steps
+    if current_time_steps > 0:
+        # Convert all strings to numeric using vectorized function
+        numeric_data = pauli_strings_to_numeric(pauli_strings)
+        
+        # Update the data array with available time steps
+        max_steps = min(current_time_steps, total_time_steps)
+        data[:max_steps] = numeric_data[:max_steps]
     
     # Create customdata with the same approach
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
