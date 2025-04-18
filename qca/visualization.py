@@ -100,46 +100,26 @@ def update_figure(fig, pauli_strings):
     cell_count = len(pauli_strings[0])
     total_time_steps = len(fig.data[0].z)
     
-    # Performance optimization: Only update what's needed
-    # Create empty arrays only for the data we need
-    data = np.zeros((current_time_steps, cell_count), dtype=np.int8)
+    # Always update the entire z data array for consistency
+    data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
     
-    # Convert the Pauli strings to numeric values in bulk
-    # This is much faster than doing it one by one
+    # Convert the Pauli strings to numeric values
     mapping = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
     
-    # Use vectorized operations for better performance
+    # Fill in all available time steps
     for t, s in enumerate(pauli_strings):
-        for i, ch in enumerate(s):
-            data[t, i] = mapping.get(ch, 0)
+        if t < total_time_steps:
+            for i, ch in enumerate(s):
+                data[t, i] = mapping.get(ch, 0)
     
-    # Only update the changed portion of the heatmap
-    # Instead of recreating the entire 2D array
-    if current_time_steps < total_time_steps:
-        # Use restyle for partial updates (much faster than updating the entire z property)
-        fig.update_traces(
-            z=[data[t] for t in range(current_time_steps)],
-            selector=dict(type='heatmap')
-        )
-        
-        # Update customdata efficiently
-        customdata_update = [[ch for ch in s] for s in pauli_strings]
-        fig.update_traces(
-            customdata=customdata_update,
-            selector=dict(type='heatmap')
-        )
-    else:
-        # If we have more data than can fit, create a new full dataset
-        full_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
-        full_data[:current_time_steps] = data[:total_time_steps]
-        
-        # Create customdata with the same efficient indexing
-        customdata = [['I'] * cell_count for _ in range(total_time_steps)]
-        for t, s in enumerate(pauli_strings[:total_time_steps]):
+    # Create customdata with the same approach
+    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
+    for t, s in enumerate(pauli_strings):
+        if t < total_time_steps:
             customdata[t] = list(s)
-        
-        # Update the entire heatmap at once
-        fig.data[0].z = full_data
-        fig.data[0].customdata = customdata
+    
+    # Update the entire heatmap at once for consistency
+    fig.data[0].z = data
+    fig.data[0].customdata = customdata
     
     return fig
