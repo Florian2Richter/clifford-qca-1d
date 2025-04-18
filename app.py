@@ -3,6 +3,7 @@ import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
 from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure
 import hashlib
+import time
 
 # Global constants
 BATCH_SIZE = 5
@@ -17,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.5 (removed sleep)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.6 (profiling)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -26,6 +27,7 @@ def setup_page_config():
         .sub-header { font-size:1.5rem; color:#424242; margin-top:1.5rem; margin-bottom:1rem; }
         .description { font-size:1rem; color:#616161; margin-bottom:1.5rem; }
         .sidebar-header { font-size:24px !important; font-weight:bold !important; margin-top:1rem !important; }
+        .stMetric { background-color:#f0f2f6; padding:10px; border-radius:5px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -174,72 +176,194 @@ def handle_parameter_changes(n, T_steps, local_rule, initial_state, current_hash
 
 def calculate_step(current_state):
     """Calculate the next state for the QCA simulation."""
+    start_time = time.time()
     next_state = mod2_matmul(st.session_state.global_operator, current_state) % 2
     next_pauli = vector_to_pauli_string(next_state)
-    return next_state, next_pauli
+    calc_time = time.time() - start_time
+    return next_state, next_pauli, calc_time
 
 def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
     """Run the progressive simulation."""
+    if 'timing_metrics' not in st.session_state:
+        st.session_state.timing_metrics = {
+            'calculation': [],
+            'plot_update': [],
+            'rendering': []
+        }
+    
+    metrics_placeholder = st.empty()
+    
     if st.session_state.current_step < st.session_state.target_steps:
         # Create the figure once on first batch
         if st.session_state.fig is None:
             st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
+            render_start = time.time()
             plot_placeholder.plotly_chart(
                 st.session_state.fig,
                 use_container_width=False,
                 key=f"init_plot_{current_hash[:8]}"
             )
+            render_time = time.time() - render_start
+            st.session_state.timing_metrics['rendering'].append(render_time)
+        
+        total_calc_time = 0
+        batch_calc_time = 0
+        batch_start = time.time()
         
         for step in range(st.session_state.current_step, st.session_state.target_steps):
             next_step = step + 1
-            next_state, next_pauli = calculate_step(st.session_state.states[-1])
+            next_state, next_pauli, calc_time = calculate_step(st.session_state.states[-1])
+            total_calc_time += calc_time
+            batch_calc_time += calc_time
+            st.session_state.timing_metrics['calculation'].append(calc_time)
+            
             st.session_state.states.append(next_state.copy())
             st.session_state.pauli_strings.append(next_pauli)
             st.session_state.current_step += 1
 
             if (st.session_state.current_step % BATCH_SIZE == 0 or 
                     st.session_state.current_step == st.session_state.target_steps):
-                # Update the existing figure instead of creating a new one
+                # Measure update time
+                update_start = time.time()
                 update_figure(st.session_state.fig, st.session_state.pauli_strings)
+                update_time = time.time() - update_start
+                st.session_state.timing_metrics['plot_update'].append(update_time)
+                
+                # Measure rendering time
+                render_start = time.time()
                 plot_placeholder.plotly_chart(
                     st.session_state.fig,
                     use_container_width=False,
                     key=f"step_{st.session_state.current_step}_{current_hash[:8]}"
                 )
+                render_time = time.time() - render_start
+                st.session_state.timing_metrics['rendering'].append(render_time)
+                
+                # Display timing metrics
+                batch_time = time.time() - batch_start
+                display_timing_metrics(metrics_placeholder, batch_calc_time, update_time, render_time, batch_time)
+                
+                # Reset batch timing
+                batch_calc_time = 0
+                batch_start = time.time()
 
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
+        
+        # Display final timing statistics
+        display_final_timing_stats(metrics_placeholder)
+        
     elif not st.session_state.simulation_complete:
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
+        display_final_timing_stats(metrics_placeholder)
+
+def display_timing_metrics(placeholder, calc_time, update_time, render_time, total_time):
+    """Display current timing metrics."""
+    with placeholder.container():
+        cols = st.columns(4)
+        cols[0].metric("Calculation time", f"{calc_time*1000:.1f} ms", f"{(calc_time/total_time)*100:.1f}%")
+        cols[1].metric("Plot update time", f"{update_time*1000:.1f} ms", f"{(update_time/total_time)*100:.1f}%")
+        cols[2].metric("Rendering time", f"{render_time*1000:.1f} ms", f"{(render_time/total_time)*100:.1f}%")
+        cols[3].metric("Total batch time", f"{total_time*1000:.1f} ms", None)
+
+def display_final_timing_stats(placeholder):
+    """Display final timing statistics after simulation completes."""
+    if 'timing_metrics' in st.session_state:
+        metrics = st.session_state.timing_metrics
+        calc_avg = sum(metrics['calculation']) / max(len(metrics['calculation']), 1) * 1000
+        update_avg = sum(metrics['plot_update']) / max(len(metrics['plot_update']), 1) * 1000
+        render_avg = sum(metrics['rendering']) / max(len(metrics['rendering']), 1) * 1000
+        total_avg = calc_avg + update_avg + render_avg
+        
+        with placeholder.container():
+            st.markdown("### Timing Statistics")
+            cols = st.columns(4)
+            cols[0].metric("Avg Calculation", f"{calc_avg:.1f} ms", f"{(calc_avg/total_avg)*100:.1f}%")
+            cols[1].metric("Avg Plot Update", f"{update_avg:.1f} ms", f"{(update_avg/total_avg)*100:.1f}%")
+            cols[2].metric("Avg Rendering", f"{render_avg:.1f} ms", f"{(render_avg/total_avg)*100:.1f}%")
+            cols[3].metric("Avg Total Time", f"{total_avg:.1f} ms", None)
+            
+            if len(metrics['calculation']) > 0:
+                st.markdown("#### Detailed Breakdown")
+                st.markdown(f"**Steps calculated:** {len(metrics['calculation'])}")
+                st.markdown(f"**Plot updates:** {len(metrics['plot_update'])}")
+                st.markdown(f"**Total calculation time:** {sum(metrics['calculation'])*1000:.1f} ms")
+                st.markdown(f"**Total update time:** {sum(metrics['plot_update'])*1000:.1f} ms")
+                st.markdown(f"**Total rendering time:** {sum(metrics['rendering'])*1000:.1f} ms")
 
 def display_results(n, plot_placeholder, current_hash):
     """Display the final simulation results."""
     # Safety check if fig doesn't exist for some reason
     if "fig" not in st.session_state or st.session_state.fig is None:
         st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
+        update_start = time.time()
         update_figure(st.session_state.fig, st.session_state.pauli_strings)
+        update_time = time.time() - update_start
+        if 'timing_metrics' in st.session_state:
+            st.session_state.timing_metrics['plot_update'].append(update_time)
     
-    # No need to create a new figure, the last update already has all data
+    # Measure rendering time
+    render_start = time.time()
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
         key=f"final_plot_{current_hash[:8]}"
     )
+    render_time = time.time() - render_start
+    if 'timing_metrics' in st.session_state:
+        st.session_state.timing_metrics['rendering'].append(render_time)
+    
+    # Display final timing stats if they exist
+    if 'timing_metrics' in st.session_state:
+        metrics_placeholder = st.empty()
+        display_final_timing_stats(metrics_placeholder)
 
 def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash):
     """Handle the initial load of the application."""
     initial_pauli = vector_to_pauli_string(initial_state)
+    
+    # Initialize timing metrics
+    if 'timing_metrics' not in st.session_state:
+        st.session_state.timing_metrics = {
+            'calculation': [],
+            'plot_update': [],
+            'rendering': []
+        }
+    
     # Create the figure once
+    fig_start = time.time()
     st.session_state.fig = make_empty_figure(n, T_steps)
+    fig_time = time.time() - fig_start
+    
+    # Measure update time
+    update_start = time.time()
     update_figure(st.session_state.fig, [initial_pauli])
+    update_time = time.time() - update_start
+    st.session_state.timing_metrics['plot_update'].append(update_time)
+    
+    # Measure rendering time
+    render_start = time.time()
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
         key=f"initial_load_{current_hash[:8]}"
     )
+    render_time = time.time() - render_start
+    st.session_state.timing_metrics['rendering'].append(render_time)
+    
+    # Display initial timing metrics
+    metrics_placeholder = st.empty()
+    total_time = fig_time + update_time + render_time
+    with metrics_placeholder.container():
+        cols = st.columns(4)
+        cols[0].metric("Figure creation", f"{fig_time*1000:.1f} ms", f"{(fig_time/total_time)*100:.1f}%")
+        cols[1].metric("Plot update time", f"{update_time*1000:.1f} ms", f"{(update_time/total_time)*100:.1f}%")
+        cols[2].metric("Rendering time", f"{render_time*1000:.1f} ms", f"{(render_time/total_time)*100:.1f}%")
+        cols[3].metric("Total time", f"{total_time*1000:.1f} ms", None)
+    
     st.session_state.pauli_strings = [initial_pauli]
     st.session_state.states = [initial_state.copy()]
     st.session_state.global_operator = global_operator
