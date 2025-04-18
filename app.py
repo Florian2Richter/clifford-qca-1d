@@ -22,7 +22,7 @@ st.set_page_config(
 profiler = cProfile.Profile()
 
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-18.2 (optimized heatmap + bugfix)**")
+st.sidebar.markdown("**App Version: 2025-04-18.3 (unique plot keys)**")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -197,7 +197,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
             plot_placeholder.plotly_chart(
                 st.session_state.fig,
                 use_container_width=False,
-                key="live_qca"
+                key=f"init_plot_{current_hash[:8]}"
             )
             
         # Start profiling the simulation loop
@@ -215,7 +215,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
                 plot_placeholder.plotly_chart(
                     st.session_state.fig,
                     use_container_width=False,
-                    key="live_qca"
+                    key=f"step_{st.session_state.current_step}_{current_hash[:8]}"
                 )
                 time.sleep(0.005)
         # Stop profiling after loop
@@ -230,7 +230,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
         status_placeholder.success("Simulation complete!")
 
 # Final plot and profiling results
-if st.session_state.simulation_complete:
+elif st.session_state.simulation_complete:
     # Safety check if fig doesn't exist for some reason
     if "fig" not in st.session_state or st.session_state.fig is None:
         st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
@@ -240,7 +240,7 @@ if st.session_state.simulation_complete:
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
-        key="live_qca"
+        key=f"final_plot_{current_hash[:8]}"
     )
 
     # Display profiling summary
@@ -251,7 +251,7 @@ if st.session_state.simulation_complete:
     st.sidebar.text(s.getvalue())
 
 # Initial load
-if not st.session_state.initialized:
+elif not st.session_state.initialized:
     initial_pauli = vector_to_pauli_string(initial_state)
     # Create the figure once
     st.session_state.fig = make_empty_figure(n, T_steps)
@@ -259,7 +259,7 @@ if not st.session_state.initialized:
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
-        key="live_qca"
+        key=f"initial_load_{current_hash[:8]}"
     )
     st.session_state.pauli_strings = [initial_pauli]
     st.session_state.states = [initial_state.copy()]
