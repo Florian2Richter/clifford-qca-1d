@@ -1,5 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
+import time
 
 # Global constants for better performance
 PAULI_MAPPING = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
@@ -123,20 +124,26 @@ def update_figure(fig, pauli_strings):
     
     Returns:
     --------
-    The updated figure (same object reference).
+    The updated figure (same object reference) and timing dictionary.
     """
+    timing = {}
+    total_start = time.time()
+    
     # Get dimensions
     current_time_steps = len(pauli_strings)
     if current_time_steps == 0:
-        return fig
+        return fig, {'total': 0}
     
     cell_count = len(pauli_strings[0])
     total_time_steps = len(fig.data[0].z)
     
-    # Always update the entire z data array for consistency
+    # Measure array allocation time
+    alloc_start = time.time()
     data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+    timing['allocation'] = time.time() - alloc_start
     
-    # Use vectorized conversion for all time steps
+    # Measure vectorized conversion time
+    conversion_start = time.time()
     if current_time_steps > 0:
         # Convert all strings to numeric using vectorized function
         numeric_data = pauli_strings_to_numeric(pauli_strings)
@@ -144,15 +151,22 @@ def update_figure(fig, pauli_strings):
         # Update the data array with available time steps
         max_steps = min(current_time_steps, total_time_steps)
         data[:max_steps] = numeric_data[:max_steps]
+    timing['numeric_conversion'] = time.time() - conversion_start
     
-    # Create customdata with the same approach
+    # Measure customdata creation time
+    customdata_start = time.time()
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     for t, s in enumerate(pauli_strings):
         if t < total_time_steps:
             customdata[t] = list(s)
+    timing['customdata_creation'] = time.time() - customdata_start
     
-    # Update the entire heatmap at once for consistency
+    # Measure the actual figure update time
+    update_start = time.time()
     fig.data[0].z = data
     fig.data[0].customdata = customdata
+    timing['figure_update'] = time.time() - update_start
     
-    return fig
+    timing['total'] = time.time() - total_start
+    
+    return fig, timing

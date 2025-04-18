@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.11 (vectorized conversion)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.12 (detailed profiling)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -188,10 +188,12 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
         st.session_state.timing_metrics = {
             'calculation': [],
             'plot_update': [],
-            'rendering': []
+            'rendering': [],
+            'plot_update_detail': []  # Added for detailed metrics
         }
     
     metrics_placeholder = st.empty()
+    plot_detail_metrics = st.empty()  # New placeholder for detailed plot update metrics
     
     if st.session_state.current_step < st.session_state.target_steps:
         # Create the figure once on first batch
@@ -223,11 +225,13 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
 
             if (st.session_state.current_step % BATCH_SIZE == 0 or 
                     st.session_state.current_step == st.session_state.target_steps):
-                # Measure update time
+                # Measure update time with detailed metrics
                 update_start = time.time()
-                update_figure(st.session_state.fig, st.session_state.pauli_strings)
+                st.session_state.fig, update_details = update_figure(st.session_state.fig, 
+                                                                    st.session_state.pauli_strings)
                 update_time = time.time() - update_start
                 st.session_state.timing_metrics['plot_update'].append(update_time)
+                st.session_state.timing_metrics['plot_update_detail'].append(update_details)
                 
                 # Measure rendering time
                 render_start = time.time()
@@ -242,6 +246,9 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                 # Display timing metrics
                 batch_time = time.time() - batch_start
                 display_timing_metrics(metrics_placeholder, batch_calc_time, update_time, render_time, batch_time)
+                
+                # Display detailed plot update metrics
+                display_plot_update_details(plot_detail_metrics, update_details)
                 
                 # Reset batch timing
                 batch_calc_time = 0
@@ -269,7 +276,35 @@ def display_timing_metrics(placeholder, calc_time, update_time, render_time, tot
         cols[2].metric("Rendering time", f"{render_time*1000:.1f} ms", f"{(render_time/total_time)*100:.1f}%")
         cols[3].metric("Total batch time", f"{total_time*1000:.1f} ms", None)
 
-def display_final_timing_stats(placeholder):
+def display_plot_update_details(placeholder, update_details):
+    """Display detailed timing metrics for plot update function."""
+    with placeholder.container():
+        st.markdown("#### Plot Update Breakdown")
+        cols = st.columns(5)
+        
+        total = update_details.get('total', 0.001)  # Avoid division by zero
+        
+        cols[0].metric("Array Allocation", 
+                      f"{update_details.get('allocation', 0)*1000:.2f} ms", 
+                      f"{(update_details.get('allocation', 0)/total)*100:.1f}%")
+        
+        cols[1].metric("Numeric Conversion", 
+                      f"{update_details.get('numeric_conversion', 0)*1000:.2f} ms", 
+                      f"{(update_details.get('numeric_conversion', 0)/total)*100:.1f}%")
+        
+        cols[2].metric("Customdata Creation", 
+                      f"{update_details.get('customdata_creation', 0)*1000:.2f} ms", 
+                      f"{(update_details.get('customdata_creation', 0)/total)*100:.1f}%")
+        
+        cols[3].metric("Figure Update", 
+                      f"{update_details.get('figure_update', 0)*1000:.2f} ms", 
+                      f"{(update_details.get('figure_update', 0)/total)*100:.1f}%")
+        
+        cols[4].metric("Total Plot Update", 
+                      f"{total*1000:.2f} ms", 
+                      None)
+
+def display_final_timing_stats(metrics_placeholder):
     """Display final timing statistics after simulation completes."""
     if 'timing_metrics' in st.session_state:
         metrics = st.session_state.timing_metrics
@@ -278,7 +313,7 @@ def display_final_timing_stats(placeholder):
         render_avg = sum(metrics['rendering']) / max(len(metrics['rendering']), 1) * 1000
         total_avg = calc_avg + update_avg + render_avg
         
-        with placeholder.container():
+        with metrics_placeholder.container():
             st.markdown("### Timing Statistics")
             cols = st.columns(4)
             cols[0].metric("Avg Calculation", f"{calc_avg:.1f} ms", f"{(calc_avg/total_avg)*100:.1f}%")
@@ -293,17 +328,35 @@ def display_final_timing_stats(placeholder):
                 st.markdown(f"**Total calculation time:** {sum(metrics['calculation'])*1000:.1f} ms")
                 st.markdown(f"**Total update time:** {sum(metrics['plot_update'])*1000:.1f} ms")
                 st.markdown(f"**Total rendering time:** {sum(metrics['rendering'])*1000:.1f} ms")
+                
+                # Plot Update Detailed Breakdown
+                if metrics['plot_update_detail']:
+                    st.markdown("#### Plot Update Component Averages")
+                    # Calculate averages for each component
+                    allocation_avg = sum(detail.get('allocation', 0) for detail in metrics['plot_update_detail']) / len(metrics['plot_update_detail']) * 1000
+                    conversion_avg = sum(detail.get('numeric_conversion', 0) for detail in metrics['plot_update_detail']) / len(metrics['plot_update_detail']) * 1000
+                    customdata_avg = sum(detail.get('customdata_creation', 0) for detail in metrics['plot_update_detail']) / len(metrics['plot_update_detail']) * 1000
+                    figure_update_avg = sum(detail.get('figure_update', 0) for detail in metrics['plot_update_detail']) / len(metrics['plot_update_detail']) * 1000
+                    
+                    component_cols = st.columns(4)
+                    component_cols[0].metric("Array Allocation", f"{allocation_avg:.2f} ms", f"{(allocation_avg/update_avg)*100:.1f}%")
+                    component_cols[1].metric("Numeric Conversion", f"{conversion_avg:.2f} ms", f"{(conversion_avg/update_avg)*100:.1f}%")
+                    component_cols[2].metric("Customdata Creation", f"{customdata_avg:.2f} ms", f"{(customdata_avg/update_avg)*100:.1f}%")
+                    component_cols[3].metric("Figure Update", f"{figure_update_avg:.2f} ms", f"{(figure_update_avg/update_avg)*100:.1f}%")
 
 def display_results(n, plot_placeholder, current_hash):
     """Display the final simulation results."""
+    metrics_placeholder = st.empty()
+    
     # Safety check if fig doesn't exist for some reason
     if "fig" not in st.session_state or st.session_state.fig is None:
         st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
         update_start = time.time()
-        update_figure(st.session_state.fig, st.session_state.pauli_strings)
+        st.session_state.fig, update_details = update_figure(st.session_state.fig, st.session_state.pauli_strings)
         update_time = time.time() - update_start
         if 'timing_metrics' in st.session_state:
             st.session_state.timing_metrics['plot_update'].append(update_time)
+            st.session_state.timing_metrics['plot_update_detail'].append(update_details)
     
     # Measure rendering time
     render_start = time.time()
@@ -318,7 +371,6 @@ def display_results(n, plot_placeholder, current_hash):
     
     # Display final timing stats if they exist
     if 'timing_metrics' in st.session_state:
-        metrics_placeholder = st.empty()
         display_final_timing_stats(metrics_placeholder)
 
 def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash):
@@ -330,7 +382,8 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
         st.session_state.timing_metrics = {
             'calculation': [],
             'plot_update': [],
-            'rendering': []
+            'rendering': [],
+            'plot_update_detail': []
         }
     
     # Create the figure once
@@ -340,9 +393,10 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
     
     # Measure update time
     update_start = time.time()
-    update_figure(st.session_state.fig, [initial_pauli])
+    st.session_state.fig, update_details = update_figure(st.session_state.fig, [initial_pauli])
     update_time = time.time() - update_start
     st.session_state.timing_metrics['plot_update'].append(update_time)
+    st.session_state.timing_metrics['plot_update_detail'].append(update_details)
     
     # Measure rendering time
     render_start = time.time()
@@ -363,6 +417,10 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
         cols[1].metric("Plot update time", f"{update_time*1000:.1f} ms", f"{(update_time/total_time)*100:.1f}%")
         cols[2].metric("Rendering time", f"{render_time*1000:.1f} ms", f"{(render_time/total_time)*100:.1f}%")
         cols[3].metric("Total time", f"{total_time*1000:.1f} ms", None)
+    
+    # Display detailed plot update metrics
+    detail_metrics = st.empty()
+    display_plot_update_details(detail_metrics, update_details)
     
     st.session_state.pauli_strings = [initial_pauli]
     st.session_state.states = [initial_state.copy()]
