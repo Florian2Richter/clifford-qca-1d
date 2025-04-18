@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from qca.core import build_global_operator, simulate_QCA, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
-from qca.visualization import pauli_to_numeric, plot_spacetime_plotly
+from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure, plot_spacetime_plotly
 from matplotlib.colors import ListedColormap
 import time
 import hashlib
@@ -22,7 +22,7 @@ st.set_page_config(
 profiler = cProfile.Profile()
 
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-17.3**")
+st.sidebar.markdown("**App Version: 2025-04-18.1 (optimized heatmap)**")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -68,6 +68,7 @@ if 'initialized' not in st.session_state:
     st.session_state.target_steps = 0
     st.session_state.simulation_running = False
     st.session_state.simulation_complete = False
+    st.session_state.fig = None
 
 # Main title
 st.markdown('<h1 class="main-header">1D Clifford QCA Simulator</h1>', unsafe_allow_html=True)
@@ -175,6 +176,7 @@ if current_hash != st.session_state.params_hash:
     st.session_state.simulation_running = True
     st.session_state.simulation_complete = False
     st.session_state.initialized = True
+    st.session_state.fig = None
 
 # Function to calculate one time step
 def calculate_step(current_state, step_number):
@@ -189,6 +191,15 @@ def calculate_step(current_state, step_number):
 BATCH_SIZE = 5
 if st.session_state.initialized and st.session_state.simulation_running:
     if st.session_state.current_step < st.session_state.target_steps:
+        # Create the figure once on first batch
+        if st.session_state.fig is None:
+            st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
+            plot_placeholder.plotly_chart(
+                st.session_state.fig,
+                use_container_width=False,
+                key="live_qca"
+            )
+            
         # Start profiling the simulation loop
         profiler.enable()
         for step in range(st.session_state.current_step, st.session_state.target_steps):
@@ -199,14 +210,12 @@ if st.session_state.initialized and st.session_state.simulation_running:
             st.session_state.current_step += 1
 
             if st.session_state.current_step % BATCH_SIZE == 0 or st.session_state.current_step == st.session_state.target_steps:
-                fig = plot_spacetime_plotly(
-                    st.session_state.pauli_strings,
-                    total_time_steps=st.session_state.target_steps
-                )
+                # Update the existing figure instead of creating a new one
+                update_figure(st.session_state.fig, st.session_state.pauli_strings)
                 plot_placeholder.plotly_chart(
-                    fig,
+                    st.session_state.fig,
                     use_container_width=False,
-                    key=f"progress_step_{st.session_state.current_step}"
+                    key="live_qca"
                 )
                 time.sleep(0.005)
         # Stop profiling after loop
@@ -220,12 +229,13 @@ if st.session_state.initialized and st.session_state.simulation_running:
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
 
-# Final plot and profiling results\if st.session_state.simulation_complete:
-    fig = plot_spacetime_plotly(st.session_state.pauli_strings)
+# Final plot and profiling results
+if st.session_state.simulation_complete:
+    # No need to create a new figure, the last update already has all data
     plot_placeholder.plotly_chart(
-        fig,
+        st.session_state.fig,
         use_container_width=False,
-        key="final_spacetime"
+        key="live_qca"
     )
 
     # Display profiling summary
@@ -238,11 +248,13 @@ if st.session_state.initialized and st.session_state.simulation_running:
 # Initial load
 if not st.session_state.initialized:
     initial_pauli = vector_to_pauli_string(initial_state)
-    fig = plot_spacetime_plotly([initial_pauli], total_time_steps=T_steps)
+    # Create the figure once
+    st.session_state.fig = make_empty_figure(n, T_steps)
+    update_figure(st.session_state.fig, [initial_pauli])
     plot_placeholder.plotly_chart(
-        fig,
+        st.session_state.fig,
         use_container_width=False,
-        key="initial_spacetime"
+        key="live_qca"
     )
     st.session_state.pauli_strings = [initial_pauli]
     st.session_state.states = [initial_state.copy()]

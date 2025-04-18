@@ -15,31 +15,23 @@ def pauli_to_numeric(pauli_str):
     numeric = [mapping.get(ch, 0) for ch in pauli_str]
     return np.array(numeric)
 
-def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
+def make_empty_figure(cell_count, total_time_steps):
     """
-    Plot the spacetime diagram using Plotly for interactivity.
+    Create an empty plotly figure with the heatmap structure but initialized with all 'I' operators.
+    This creates the figure only once, which can then be updated efficiently.
     
     Parameters:
     -----------
-    pauli_strings : list of strings
-        List of Pauli strings representing the state at each calculated time step.
-    total_time_steps : int, optional
-        Total number of time steps to show in the plot. If None, uses len(pauli_strings).
-        This is used for progressive visualization to keep axes consistent.
+    cell_count : int
+        Number of cells in the QCA.
+    total_time_steps : int
+        Total number of time steps to show in the plot.
     """
-    current_time_steps = len(pauli_strings)
-    if current_time_steps == 0:
-        return go.Figure()
+    # Initialize empty data arrays
+    data = np.zeros((total_time_steps, cell_count), dtype=int)  # All 'I' operators
+    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     
-    cell_count = len(pauli_strings[0])
-    
-    if total_time_steps is None or total_time_steps < current_time_steps:
-        total_time_steps = current_time_steps
-    
-    data = np.zeros((total_time_steps, cell_count), dtype=int)
-    for t, s in enumerate(pauli_strings):
-        data[t] = pauli_to_numeric(s)
-    
+    # Define the color scale
     colorscale = [
         [0.0, 'white'],
         [0.25, 'white'],
@@ -51,6 +43,7 @@ def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
         [1.0, '#4A4A4A']
     ]
     
+    # Create the heatmap
     fig = go.Figure(data=go.Heatmap(
         z=data,
         x=list(range(cell_count)),
@@ -69,11 +62,10 @@ def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
             y=1
         ),
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
-        customdata=[[pauli_strings[y][x] if y < current_time_steps else 'I' 
-                    for x in range(cell_count)] 
-                    for y in range(total_time_steps)]
+        customdata=customdata
     ))
     
+    # Set layout
     fig.update_layout(
         title='1D Clifford QCA Spacetime Diagram',
         xaxis_title='Cell Position',
@@ -85,5 +77,79 @@ def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
         height=500,
         autosize=False
     )
+    
+    return fig
+
+def update_figure(fig, pauli_strings):
+    """
+    Update an existing plotly figure with new data without recreating the entire figure.
+    Much more efficient than recreating the figure for each update.
+    
+    Parameters:
+    -----------
+    fig : plotly.graph_objects.Figure
+        The existing figure to update.
+    pauli_strings : list of strings
+        List of Pauli strings representing the state at each calculated time step.
+    
+    Returns:
+    --------
+    The updated figure (same object reference).
+    """
+    # Get dimensions
+    current_time_steps = len(pauli_strings)
+    if current_time_steps == 0:
+        return fig
+    
+    cell_count = len(pauli_strings[0])
+    total_time_steps = len(fig.data[0].z)
+    
+    # Update z data (for colors)
+    data = np.zeros((total_time_steps, cell_count), dtype=int)
+    for t, s in enumerate(pauli_strings):
+        if t < total_time_steps:
+            data[t] = pauli_to_numeric(s)
+    
+    # Update customdata (for hover tooltips)
+    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
+    for t, s in enumerate(pauli_strings):
+        if t < total_time_steps:
+            customdata[t] = list(s)
+    
+    # Update the heatmap data directly
+    fig.data[0].z = data
+    fig.data[0].customdata = customdata
+    
+    return fig
+
+def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
+    """
+    Plot the spacetime diagram using Plotly for interactivity.
+    
+    This function is maintained for backward compatibility.
+    For better performance, use make_empty_figure() once followed by update_figure().
+    
+    Parameters:
+    -----------
+    pauli_strings : list of strings
+        List of Pauli strings representing the state at each calculated time step.
+    total_time_steps : int, optional
+        Total number of time steps to show in the plot. If None, uses len(pauli_strings).
+        This is used for progressive visualization to keep axes consistent.
+    """
+    current_time_steps = len(pauli_strings)
+    if current_time_steps == 0:
+        return go.Figure()
+    
+    cell_count = len(pauli_strings[0])
+    
+    if total_time_steps is None or total_time_steps < current_time_steps:
+        total_time_steps = current_time_steps
+    
+    # Create empty figure
+    fig = make_empty_figure(cell_count, total_time_steps)
+    
+    # Update with actual data
+    update_figure(fig, pauli_strings)
     
     return fig
