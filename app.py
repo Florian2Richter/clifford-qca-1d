@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.7 (optimized plotting)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.8 (plotting fix)**")
     
     # Custom CSS for better styling
     st.markdown("""

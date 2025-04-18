@@ -119,16 +119,14 @@ def update_figure(fig, pauli_strings):
         # Use restyle for partial updates (much faster than updating the entire z property)
         fig.update_traces(
             z=[data[t] for t in range(current_time_steps)],
-            selector=dict(type='heatmap'),
-            row=1, col=1
+            selector=dict(type='heatmap')
         )
         
         # Update customdata efficiently
         customdata_update = [[ch for ch in s] for s in pauli_strings]
         fig.update_traces(
             customdata=customdata_update,
-            selector=dict(type='heatmap'),
-            row=1, col=1
+            selector=dict(type='heatmap')
         )
     else:
         # If we have more data than can fit, create a new full dataset
