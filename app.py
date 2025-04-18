@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-19.1 (code cleanup)**")
+st.sidebar.markdown("**App Version: 2025-04-19.2 (simplified calculation)**")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -171,13 +171,11 @@ if current_hash != st.session_state.params_hash:
     st.session_state.fig = None
 
 # Function to calculate one time step
-def calculate_step(current_state, step_number):
-    start_time = time.time()
+def calculate_step(current_state):
+    """Calculate the next state for the QCA simulation."""
     next_state = mod2_matmul(st.session_state.global_operator, current_state) % 2
     next_pauli = vector_to_pauli_string(next_state)
-    end_time = time.time()
-    calculation_time = end_time - start_time
-    return next_state, next_pauli, calculation_time
+    return next_state, next_pauli
 
 # Progressive simulation
 BATCH_SIZE = 5
@@ -194,7 +192,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
             
         for step in range(st.session_state.current_step, st.session_state.target_steps):
             next_step = step + 1
-            next_state, next_pauli, calc_time = calculate_step(st.session_state.states[-1], next_step)
+            next_state, next_pauli = calculate_step(st.session_state.states[-1])
             st.session_state.states.append(next_state.copy())
             st.session_state.pauli_strings.append(next_pauli)
             st.session_state.current_step += 1
