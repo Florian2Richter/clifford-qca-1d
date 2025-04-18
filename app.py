@@ -2,7 +2,6 @@ import streamlit as st
 import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
 from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure
-import time
 import hashlib
 
 # Global constants
@@ -18,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.3 (refactored structure)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.4 (removed delay)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -26,7 +25,7 @@ def setup_page_config():
         .main-header { font-size:2.5rem; color:#1E88E5; text-align:center; margin-bottom:1rem; }
         .sub-header { font-size:1.5rem; color:#424242; margin-top:1.5rem; margin-bottom:1rem; }
         .description { font-size:1rem; color:#616161; margin-bottom:1.5rem; }
-        .sidebar-header { font-size:24px !important; font-weight:bold !important; margin-bottom:15px !important; }
+        .sidebar-header { font-size:24px !important; font-weight:bold !important; margin-top:1rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -207,7 +206,6 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                     use_container_width=False,
                     key=f"step_{st.session_state.current_step}_{current_hash[:8]}"
                 )
-                time.sleep(0.005)
 
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
