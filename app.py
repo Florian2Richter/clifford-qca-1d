@@ -22,7 +22,7 @@ st.set_page_config(
 profiler = cProfile.Profile()
 
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-18.1 (optimized heatmap)**")
+st.sidebar.markdown("**App Version: 2025-04-18.2 (optimized heatmap + bugfix)**")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -231,6 +231,11 @@ if st.session_state.initialized and st.session_state.simulation_running:
 
 # Final plot and profiling results
 if st.session_state.simulation_complete:
+    # Safety check if fig doesn't exist for some reason
+    if "fig" not in st.session_state or st.session_state.fig is None:
+        st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
+        update_figure(st.session_state.fig, st.session_state.pauli_strings)
+    
     # No need to create a new figure, the last update already has all data
     plot_placeholder.plotly_chart(
         st.session_state.fig,
