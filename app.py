@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.16 (250 time steps default)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.18 (rendering optimization, BATCH_SIZE=5)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -203,6 +203,7 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
             plot_placeholder.plotly_chart(
                 st.session_state.fig,
                 use_container_width=False,
+                config=getattr(st.session_state.fig, '_config', None),
                 key=f"init_plot_{current_hash[:8]}"
             )
             render_time = time.time() - render_start
@@ -230,7 +231,7 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                 
                 # Update the figure with the optimized method
                 st.session_state.fig, update_details = update_figure(st.session_state.fig, 
-                                                                   st.session_state.pauli_strings)
+                                                                     st.session_state.pauli_strings)
                     
                 update_time = time.time() - update_start
                 st.session_state.timing_metrics['plot_update'].append(update_time)
@@ -241,6 +242,7 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                 plot_placeholder.plotly_chart(
                     st.session_state.fig,
                     use_container_width=False,
+                    config=getattr(st.session_state.fig, '_config', None),
                     key=f"step_{st.session_state.current_step}_{current_hash[:8]}"
                 )
                 render_time = time.time() - render_start
@@ -256,7 +258,7 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                 # Reset batch timing
                 batch_calc_time = 0
                 batch_start = time.time()
-
+        
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
@@ -268,7 +270,6 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
-        display_final_timing_stats(metrics_placeholder)
 
 def display_timing_metrics(placeholder, calc_time, update_time, render_time, total_time):
     """Display current timing metrics."""
@@ -360,6 +361,7 @@ def display_results(n, plot_placeholder, current_hash):
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
+        config=getattr(st.session_state.fig, '_config', None),
         key=f"final_plot_{current_hash[:8]}"
     )
     render_time = time.time() - render_start
@@ -400,6 +402,7 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
+        config=getattr(st.session_state.fig, '_config', None),
         key=f"initial_load_{current_hash[:8]}"
     )
     render_time = time.time() - render_start
@@ -435,6 +438,9 @@ def main():
     # Initialize session state
     initialize_session_state()
     
+    # Optimize Streamlit performance
+    st.cache_data.clear()  # Clear on each run to reduce memory usage
+    
     # Setup UI elements
     n, T_steps, local_rule, initial_state, plot_placeholder, status_placeholder = setup_ui_elements()
     
@@ -447,13 +453,14 @@ def main():
     # Handle parameter changes
     handle_parameter_changes(n, T_steps, local_rule, initial_state, current_hash)
     
-    # App execution flow
-    if st.session_state.initialized and st.session_state.simulation_running:
-        run_simulation(n, plot_placeholder, status_placeholder, current_hash)
-    elif st.session_state.simulation_complete:
-        display_results(n, plot_placeholder, current_hash)
-    elif not st.session_state.initialized:
-        handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash)
+    # App execution flow - use with blocks for better memory management
+    with st.spinner("Processing simulation..."):
+        if st.session_state.initialized and st.session_state.simulation_running:
+            run_simulation(n, plot_placeholder, status_placeholder, current_hash)
+        elif st.session_state.simulation_complete:
+            display_results(n, plot_placeholder, current_hash)
+        elif not st.session_state.initialized:
+            handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash)
 
 # Run the application
 if __name__ == "__main__":
