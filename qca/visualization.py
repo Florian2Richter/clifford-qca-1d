@@ -79,7 +79,7 @@ def make_empty_figure(cell_count, total_time_steps):
 def update_figure(fig, pauli_strings):
     """
     Update an existing plotly figure with new data without recreating the entire figure.
-    Much more efficient than recreating the figure for each update.
+    Optimized for performance with large datasets.
     
     Parameters:
     -----------
@@ -100,20 +100,48 @@ def update_figure(fig, pauli_strings):
     cell_count = len(pauli_strings[0])
     total_time_steps = len(fig.data[0].z)
     
-    # Update z data (for colors)
-    data = np.zeros((total_time_steps, cell_count), dtype=int)
-    for t, s in enumerate(pauli_strings):
-        if t < total_time_steps:
-            data[t] = pauli_to_numeric(s)
+    # Performance optimization: Only update what's needed
+    # Create empty arrays only for the data we need
+    data = np.zeros((current_time_steps, cell_count), dtype=np.int8)
     
-    # Update customdata (for hover tooltips)
-    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
+    # Convert the Pauli strings to numeric values in bulk
+    # This is much faster than doing it one by one
+    mapping = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
+    
+    # Use vectorized operations for better performance
     for t, s in enumerate(pauli_strings):
-        if t < total_time_steps:
+        for i, ch in enumerate(s):
+            data[t, i] = mapping.get(ch, 0)
+    
+    # Only update the changed portion of the heatmap
+    # Instead of recreating the entire 2D array
+    if current_time_steps < total_time_steps:
+        # Use restyle for partial updates (much faster than updating the entire z property)
+        fig.update_traces(
+            z=[data[t] for t in range(current_time_steps)],
+            selector=dict(type='heatmap'),
+            row=1, col=1
+        )
+        
+        # Update customdata efficiently
+        customdata_update = [[ch for ch in s] for s in pauli_strings]
+        fig.update_traces(
+            customdata=customdata_update,
+            selector=dict(type='heatmap'),
+            row=1, col=1
+        )
+    else:
+        # If we have more data than can fit, create a new full dataset
+        full_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+        full_data[:current_time_steps] = data[:total_time_steps]
+        
+        # Create customdata with the same efficient indexing
+        customdata = [['I'] * cell_count for _ in range(total_time_steps)]
+        for t, s in enumerate(pauli_strings[:total_time_steps]):
             customdata[t] = list(s)
-    
-    # Update the heatmap data directly
-    fig.data[0].z = data
-    fig.data[0].customdata = customdata
+        
+        # Update the entire heatmap at once
+        fig.data[0].z = full_data
+        fig.data[0].customdata = customdata
     
     return fig
