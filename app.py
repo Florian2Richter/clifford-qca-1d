@@ -6,9 +6,6 @@ from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure
 from matplotlib.colors import ListedColormap
 import time
 import hashlib
-import cProfile
-import pstats
-import io
 
 # Set page configuration
 st.set_page_config(
@@ -18,11 +15,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Instantiate profiler
-profiler = cProfile.Profile()
-
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-18.3 (unique plot keys)**")
+st.sidebar.markdown("**App Version: 2025-04-18.4 (no profiling)**")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -187,7 +181,7 @@ def calculate_step(current_state, step_number):
     calculation_time = end_time - start_time
     return next_state, next_pauli, calculation_time
 
-# Progressive simulation with profiling
+# Progressive simulation
 BATCH_SIZE = 5
 if st.session_state.initialized and st.session_state.simulation_running:
     if st.session_state.current_step < st.session_state.target_steps:
@@ -200,8 +194,6 @@ if st.session_state.initialized and st.session_state.simulation_running:
                 key=f"init_plot_{current_hash[:8]}"
             )
             
-        # Start profiling the simulation loop
-        profiler.enable()
         for step in range(st.session_state.current_step, st.session_state.target_steps):
             next_step = step + 1
             next_state, next_pauli, calc_time = calculate_step(st.session_state.states[-1], next_step)
@@ -218,8 +210,6 @@ if st.session_state.initialized and st.session_state.simulation_running:
                     key=f"step_{st.session_state.current_step}_{current_hash[:8]}"
                 )
                 time.sleep(0.005)
-        # Stop profiling after loop
-        profiler.disable()
 
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
@@ -229,7 +219,7 @@ if st.session_state.initialized and st.session_state.simulation_running:
         st.session_state.simulation_complete = True
         status_placeholder.success("Simulation complete!")
 
-# Final plot and profiling results
+# Final plot 
 elif st.session_state.simulation_complete:
     # Safety check if fig doesn't exist for some reason
     if "fig" not in st.session_state or st.session_state.fig is None:
@@ -242,13 +232,6 @@ elif st.session_state.simulation_complete:
         use_container_width=False,
         key=f"final_plot_{current_hash[:8]}"
     )
-
-    # Display profiling summary
-    s = io.StringIO()
-    ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
-    ps.print_stats(10)
-    st.sidebar.markdown("### 🐢 Profiling Results")
-    st.sidebar.text(s.getvalue())
 
 # Initial load
 elif not st.session_state.initialized:
