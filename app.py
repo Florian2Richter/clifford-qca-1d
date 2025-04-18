@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-19.4 (removed delay)**")
+    st.sidebar.markdown("**App Version: 2025-04-19.5 (removed sleep)**")
     
     # Custom CSS for better styling
     st.markdown("""
