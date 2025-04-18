@@ -1,9 +1,7 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
-from qca.core import build_global_operator, simulate_QCA, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
-from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure, plot_spacetime_plotly
-from matplotlib.colors import ListedColormap
+from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
+from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure
 import time
 import hashlib
 
@@ -16,7 +14,7 @@ st.set_page_config(
 )
 
 # Add version indicator to verify deployment
-st.sidebar.markdown("**App Version: 2025-04-18.4 (no profiling)**")
+st.sidebar.markdown("**App Version: 2025-04-19.1 (code cleanup)**")
 
 # Custom CSS for better styling
 st.markdown("""

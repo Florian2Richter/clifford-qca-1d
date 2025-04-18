@@ -1,9 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 import plotly.graph_objects as go
-import streamlit.components.v1 as components
-import streamlit as st
 
 def pauli_to_numeric(pauli_str):
     """
@@ -119,37 +115,5 @@ def update_figure(fig, pauli_strings):
     # Update the heatmap data directly
     fig.data[0].z = data
     fig.data[0].customdata = customdata
-    
-    return fig
-
-def plot_spacetime_plotly(pauli_strings, total_time_steps=None):
-    """
-    Plot the spacetime diagram using Plotly for interactivity.
-    
-    This function is maintained for backward compatibility.
-    For better performance, use make_empty_figure() once followed by update_figure().
-    
-    Parameters:
-    -----------
-    pauli_strings : list of strings
-        List of Pauli strings representing the state at each calculated time step.
-    total_time_steps : int, optional
-        Total number of time steps to show in the plot. If None, uses len(pauli_strings).
-        This is used for progressive visualization to keep axes consistent.
-    """
-    current_time_steps = len(pauli_strings)
-    if current_time_steps == 0:
-        return go.Figure()
-    
-    cell_count = len(pauli_strings[0])
-    
-    if total_time_steps is None or total_time_steps < current_time_steps:
-        total_time_steps = current_time_steps
-    
-    # Create empty figure
-    fig = make_empty_figure(cell_count, total_time_steps)
-    
-    # Update with actual data
-    update_figure(fig, pauli_strings)
     
     return fig
