@@ -60,37 +60,27 @@ def make_empty_figure(cell_count, total_time_steps):
     data = np.zeros((total_time_steps, cell_count), dtype=np.int8)  # All 'I' operators
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     
-    # Create an array for discrete colors
-    data_discrete = data.astype(float)
-    
-    # Define colors for each Pauli operator
-    colors = {
-        0: 'white',     # I
-        1: '#008080',   # X (teal)
-        2: '#FF7F50',   # Z (coral)
-        3: '#4A4A4A'    # Y (dark gray)
-    }
-    
-    # Create a discrete colorscale
-    colorscale = [[0, colors[0]],
-                  [0.25, colors[0]], [0.25, colors[1]],
-                  [0.50, colors[1]], [0.50, colors[2]],
-                  [0.75, colors[2]], [0.75, colors[3]],
-                  [1.0, colors[3]]]
+    # Define colors for each Pauli operator with correct mapping
+    color_mapping = [
+        [0, 'white'],     # I (value 0)
+        [1, '#008080'],   # X (value 1)
+        [2, '#FF7F50'],   # Z (value 2)
+        [3, '#4A4A4A']    # Y (value 3)
+    ]
     
     # Create the heatmap with optimized performance settings
     fig = go.Figure(data=go.Heatmap(
-        z=data_discrete,
+        z=data,
         x=list(range(cell_count)),
         y=list(range(total_time_steps)),
-        colorscale=colorscale,
+        colorscale=color_mapping,
         zmin=0,
         zmax=3,
         showscale=True,
         colorbar=dict(
             title='Pauli Operator',
-            tickvals=[0.125, 0.375, 0.625, 0.875],  # midpoints of each segment
-            ticktext=['I', 'X', 'Z', 'Y'],
+            tickvals=[0, 1, 2, 3],          # Use actual values
+            ticktext=['I', 'X', 'Z', 'Y'],  # Label order matches values
             lenmode='pixels',
             len=200,
             yanchor='top',
@@ -99,7 +89,7 @@ def make_empty_figure(cell_count, total_time_steps):
             outlinewidth=1,
             outlinecolor='black',
             ticks='outside',
-            ticklen=5, 
+            ticklen=8, 
             tickwidth=2
         ),
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
@@ -194,7 +184,7 @@ def update_figure(fig, pauli_strings):
     
     # Convert strings to numeric data
     if current_time_steps > 0:
-        # Convert strings to numeric data
+        # Convert strings to numeric data using our mapping (I->0, X->1, Z->2, Y->3)
         numeric_data = pauli_strings_to_numeric(pauli_strings)
         
         # Prepare the full data array
@@ -204,13 +194,13 @@ def update_figure(fig, pauli_strings):
     else:
         z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
     
-    # Create customdata
+    # Create customdata for hover information
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     for t, s in enumerate(pauli_strings):
         if t < total_time_steps:
             customdata[t] = list(s)
     
-    # Update the figure
+    # Update the figure with the integer values and customdata
     fig.plotly_restyle(
         {'z': [z_data], 'customdata': [customdata]},
         trace_indexes=[0]
