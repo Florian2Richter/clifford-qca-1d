@@ -56,12 +56,13 @@ def setup_ui_elements():
     <div class="description">
     This simulator visualizes the evolution of a 1-Dimensional Clifford Quantum Cellular Automaton (QCA). 
     The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lattice over time.
-    <br><br>
-    <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">What am I seeing here?</a>
     </div>
     """, unsafe_allow_html=True)
     
     # Sidebar for simulation parameters
+    st.sidebar.markdown("""
+    <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">What am I seeing here?</a>
+    """, unsafe_allow_html=True)
     st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
     n = st.sidebar.number_input("Number of cells", min_value=3, value=500, step=1)
     T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=250, step=1)
