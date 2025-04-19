@@ -1,4 +1,5 @@
-# 1D Clifford QCA Simulator
+# 1D Clifford Quantum Cellular Automata Simulator
+Version: 2024-04-19.1
 
 <div align="center">
   <a href="https://clifford-qca-1d-wqukva9js5377m8nz48nd8.streamlit.app/">
