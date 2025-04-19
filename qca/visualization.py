@@ -62,13 +62,13 @@ def make_empty_figure(cell_count, total_time_steps):
     
     # Define the color scale
     colorscale = [
-        [0.0, 'white'],
+        [0.0, 'white'],       # I (value 0)
         [0.25, 'white'],
-        [0.25, '#008080'],
+        [0.25, '#008080'],    # X (value 1)
         [0.5, '#008080'],
-        [0.5, '#FF7F50'],
+        [0.5, '#FF7F50'],     # Z (value 2)
         [0.75, '#FF7F50'],
-        [0.75, '#4A4A4A'],
+        [0.75, '#4A4A4A'],    # Y (value 3)
         [1.0, '#4A4A4A']
     ]
     
@@ -83,12 +83,13 @@ def make_empty_figure(cell_count, total_time_steps):
         showscale=True,
         colorbar=dict(
             title='Pauli Operator',
-            tickvals=[0.5, 1.5, 2.5, 3.5],
+            tickvals=[0, 1, 2, 3],     # Use actual values instead of midpoints
             ticktext=['I', 'X', 'Z', 'Y'],
             lenmode='pixels',
             len=200,
             yanchor='top',
-            y=1
+            y=1,
+            thickness=20   # Make colorbar slightly thicker for better visibility
         ),
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
         customdata=customdata,
