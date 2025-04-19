@@ -60,21 +60,27 @@ def make_empty_figure(cell_count, total_time_steps):
     data = np.zeros((total_time_steps, cell_count), dtype=np.int8)  # All 'I' operators
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     
-    # Define the color scale
-    colorscale = [
-        [0.0, 'white'],       # I (value 0)
-        [0.24, 'white'],
-        [0.25, '#008080'],    # X (value 1)
-        [0.49, '#008080'],
-        [0.5, '#FF7F50'],     # Z (value 2)
-        [0.74, '#FF7F50'],
-        [0.75, '#4A4A4A'],    # Y (value 3)
-        [1.0, '#4A4A4A']
-    ]
+    # Create an array for discrete colors
+    data_discrete = data.astype(float)
+    
+    # Define colors for each Pauli operator
+    colors = {
+        0: 'white',     # I
+        1: '#008080',   # X (teal)
+        2: '#FF7F50',   # Z (coral)
+        3: '#4A4A4A'    # Y (dark gray)
+    }
+    
+    # Create a discrete colorscale
+    colorscale = [[0, colors[0]],
+                  [0.25, colors[0]], [0.25, colors[1]],
+                  [0.50, colors[1]], [0.50, colors[2]],
+                  [0.75, colors[2]], [0.75, colors[3]],
+                  [1.0, colors[3]]]
     
     # Create the heatmap with optimized performance settings
     fig = go.Figure(data=go.Heatmap(
-        z=data,
+        z=data_discrete,
         x=list(range(cell_count)),
         y=list(range(total_time_steps)),
         colorscale=colorscale,
@@ -83,28 +89,21 @@ def make_empty_figure(cell_count, total_time_steps):
         showscale=True,
         colorbar=dict(
             title='Pauli Operator',
-            tickvals=[0, 1, 2, 3],     # Use actual values
+            tickvals=[0.125, 0.375, 0.625, 0.875],  # midpoints of each segment
             ticktext=['I', 'X', 'Z', 'Y'],
             lenmode='pixels',
             len=200,
             yanchor='top',
             y=1,
-            thickness=25,   # Make colorbar thicker
-            outlinewidth=1, # Add outline
+            thickness=25,
+            outlinewidth=1,
             outlinecolor='black',
-            ticks='outside', # Show ticks outside
-            ticklen=5,      # Longer tick marks
-            tickwidth=2,     # Thicker tick marks
-            tickmode='array'  # Ensure discrete ticks
+            ticks='outside',
+            ticklen=5, 
+            tickwidth=2
         ),
-        # Make the heatmap use discrete colors without interpolation
-        zauto=False,
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
-        customdata=customdata,
-        # Performance optimizations
-        hoverongaps=False,  # Don't render hover effects for gaps
-        hoverlabel=dict(font=dict(size=10)),  # Smaller hover labels
-        zhoverformat='.0f'  # Simplify hover data format
+        customdata=customdata
     ))
     
     # Set layout with performance optimizations
