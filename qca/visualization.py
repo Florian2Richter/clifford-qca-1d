@@ -1,6 +1,5 @@
 import numpy as np
 import plotly.graph_objects as go
-import time
 
 # Global constants for better performance
 PAULI_MAPPING = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
@@ -164,8 +163,7 @@ def make_empty_figure(cell_count, total_time_steps):
 
 def update_figure(fig, pauli_strings):
     """
-    Ultra-optimized method to update an existing plotly figure with new data.
-    Uses the most efficient Plotly update method available for best performance.
+    Update an existing plotly figure with new data.
     
     Parameters:
     -----------
@@ -176,54 +174,38 @@ def update_figure(fig, pauli_strings):
     
     Returns:
     --------
-    The updated figure (same object reference) and timing dictionary.
+    The updated figure.
     """
-    timing = {}
-    total_start = time.time()
-    
     # Get dimensions
     current_time_steps = len(pauli_strings)
     if current_time_steps == 0:
-        return fig, {'total': 0}
+        return fig
     
     cell_count = len(pauli_strings[0])
     total_time_steps = len(fig.data[0].z)
     
-    # Measure array allocation and conversion time combined
-    conversion_start = time.time()
+    # Convert strings to numeric data
     if current_time_steps > 0:
         # Convert strings to numeric data
         numeric_data = pauli_strings_to_numeric(pauli_strings)
         
-        # Prepare the full data array only if needed
+        # Prepare the full data array
         max_steps = min(current_time_steps, total_time_steps)
         z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
         z_data[:max_steps] = numeric_data[:max_steps]
     else:
         z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
     
-    timing['data_preparation'] = time.time() - conversion_start
-    
-    # Measure customdata creation time
-    customdata_start = time.time()
+    # Create customdata
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     for t, s in enumerate(pauli_strings):
         if t < total_time_steps:
             customdata[t] = list(s)
     
-    timing['customdata_creation'] = time.time() - customdata_start
-    
-    # Measure the actual figure update time
-    update_start = time.time()
-    
-    # Use the fastest update method - direct data access through restyle
-    # this avoids any JSON serialization overhead in Plotly's update_traces method
+    # Update the figure
     fig.plotly_restyle(
         {'z': [z_data], 'customdata': [customdata]},
         trace_indexes=[0]
     )
     
-    timing['figure_update'] = time.time() - update_start
-    timing['total'] = time.time() - total_start
-    
-    return fig, timing
+    return fig
