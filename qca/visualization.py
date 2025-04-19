@@ -117,11 +117,11 @@ def make_empty_figure(cell_count, total_time_steps):
         width=800,
         height=500,
         autosize=False,
-        # Performance optimizations
+        # Enable interactive features
         uirevision=True,  # Maintain UI state during updates
         hovermode='closest',    # Simplify hover behavior
         hoverdistance=10,       # Limit hover distance detection
-        dragmode=False,         # Disable drag interactions
+        dragmode='zoom',        # Enable zoom selection
         modebar=dict(
             orientation='v',
             bgcolor='rgba(0,0,0,0)'
@@ -131,13 +131,13 @@ def make_empty_figure(cell_count, total_time_steps):
         plot_bgcolor='rgba(0,0,0,0)'    # Transparent plot area
     )
     
-    # Disable unnecessary interactivity to improve performance
+    # Configure interactivity
     config = {
         'displayModeBar': True,
-        'scrollZoom': False,
+        'scrollZoom': True,     # Enable scroll wheel zooming
         'displaylogo': False,
         'responsive': True,
-        'staticPlot': False,  # Setting to True would disable all interactivity
+        'staticPlot': False,    # Allow interactivity
         'toImageButtonOptions': {
             'format': 'png',
             'filename': 'qca_simulation',
@@ -146,7 +146,7 @@ def make_empty_figure(cell_count, total_time_steps):
             'scale': 1
         },
         'modeBarButtonsToRemove': [
-            'select2d', 'lasso2d', 'autoScale2d', 'resetScale2d',
+            'select2d', 'lasso2d',  # Keep zoom buttons
             'hoverClosestCartesian', 'hoverCompareCartesian',
             'toggleSpikelines', 'toggleHover', 'resetViewMapbox'
         ]
