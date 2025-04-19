@@ -207,7 +207,13 @@ def update_figure(fig, pauli_strings):
     if not pauli_strings:
         return fig
     
-    # Get the total dimensions from the figure's layout
+    # Convert strings to numeric array
+    numeric_data = pauli_strings_to_numeric(pauli_strings)
+    current_time_steps = numeric_data.shape[0]
+    cell_count = numeric_data.shape[1]
+    
+    # Make sure our total_time_steps is at least as large as current_time_steps
+    # Get the total from the figure's layout
     yaxis_range = fig.layout.yaxis.range
     if yaxis_range and len(yaxis_range) == 2:
         total_time_steps = int(max(yaxis_range))
@@ -215,10 +221,8 @@ def update_figure(fig, pauli_strings):
         # Default if not set
         total_time_steps = 250
     
-    # Convert strings to numeric array
-    numeric_data = pauli_strings_to_numeric(pauli_strings)
-    current_time_steps = numeric_data.shape[0]
-    cell_count = numeric_data.shape[1]
+    # Ensure there's enough space for all data
+    total_time_steps = max(total_time_steps, current_time_steps)
     
     # Create full-sized data array with zeros
     full_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
@@ -231,5 +235,9 @@ def update_figure(fig, pauli_strings):
     
     # Update the image
     fig.update_traces(z=rgba, selector=dict(type='image'))
+    
+    # Update the yaxis range if it changed
+    if max(fig.layout.yaxis.range) < total_time_steps:
+        fig.update_layout(yaxis=dict(range=[total_time_steps, 0]))
     
     return fig
