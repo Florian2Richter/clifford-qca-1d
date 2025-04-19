@@ -128,8 +128,7 @@ def make_empty_figure(cell_count, total_time_steps):
     fig = go.Figure(go.Image(
         z=rgba,
         x0=0, dx=1,  # Map to cell indices
-        y0=0, dy=1,  # Map to time steps
-        zmin=0, zmax=3  # Set fixed range for color mapping
+        y0=0, dy=1   # Map to time steps
     ))
     
     # Add custom colorbar
