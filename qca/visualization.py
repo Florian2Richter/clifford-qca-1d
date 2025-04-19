@@ -44,10 +44,72 @@ def pauli_strings_to_numeric(pauli_strings):
     
     return result
 
+def pauli_to_rgba(data):
+    """
+    Convert Pauli operator numeric data (0-3) to RGBA values for WebGL rendering.
+    
+    Parameters:
+    -----------
+    data : numpy.ndarray
+        Array of Pauli operator numeric values (0-3).
+        
+    Returns:
+    --------
+    numpy.ndarray of shape (*data.shape, 4) with RGBA values as uint8.
+    """
+    # Create empty RGBA array
+    rows, cols = data.shape
+    rgba = np.zeros((rows, cols, 4), dtype=np.uint8)
+    
+    # Define our color mapping (same as current colorscale)
+    colors = {
+        0: [255, 255, 255, 255],  # 'I' -> white
+        1: [0, 128, 128, 255],    # 'X' -> teal (#008080)
+        2: [255, 127, 80, 255],   # 'Z' -> coral (#FF7F50)
+        3: [74, 74, 74, 255]      # 'Y' -> dark gray (#4A4A4A)
+    }
+    
+    # Apply colors to each value
+    for val, color in colors.items():
+        mask = (data == val)
+        for i in range(4):  # Apply each RGBA channel
+            rgba[mask, i] = color[i]
+            
+    return rgba
+
+def add_custom_colorbar(fig):
+    """
+    Add a custom colorbar to the figure for Pauli operators.
+    Since go.Image doesn't have a built-in colorbar, we add a dummy trace.
+    """
+    # Add a dummy trace for the colorbar
+    fig.add_trace(go.Scatter(
+        x=[None], y=[None], mode='markers',
+        marker=dict(
+            colorscale=[
+                [0, 'white'], [0.25, 'white'],
+                [0.25, '#008080'], [0.5, '#008080'],
+                [0.5, '#FF7F50'], [0.75, '#FF7F50'],
+                [0.75, '#4A4A4A'], [1.0, '#4A4A4A']
+            ],
+            showscale=True,
+            cmin=0, cmax=3,
+            colorbar=dict(
+                title='Pauli Operator',
+                tickvals=[0.5, 1.5, 2.5, 3.5],
+                ticktext=['I', 'X', 'Z', 'Y'],
+                lenmode='pixels',
+                len=200,
+                yanchor='top',
+                y=1
+            )
+        ),
+        showlegend=False
+    ))
+
 def make_empty_figure(cell_count, total_time_steps):
     """
-    Create an empty plotly figure with the heatmap structure but initialized with all 'I' operators.
-    This creates the figure only once, which can then be updated efficiently.
+    Create an empty plotly figure for the QCA simulation using go.Image for WebGL rendering.
     
     Parameters:
     -----------
@@ -56,79 +118,46 @@ def make_empty_figure(cell_count, total_time_steps):
     total_time_steps : int
         Total number of time steps to show in the plot.
     """
-    # Initialize empty data arrays
-    data = np.zeros((total_time_steps, cell_count), dtype=np.int8)  # All 'I' operators
-    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
+    # Initialize empty data array (all 'I' operators = 0)
+    data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
     
-    # Define the color scale
-    colorscale = [
-        [0.0, 'white'],
-        [0.25, 'white'],
-        [0.25, '#008080'],
-        [0.5, '#008080'],
-        [0.5, '#FF7F50'],
-        [0.75, '#FF7F50'],
-        [0.75, '#4A4A4A'],
-        [1.0, '#4A4A4A']
-    ]
+    # Convert to RGBA
+    rgba = pauli_to_rgba(data)
     
-    # Create the heatmap with optimized performance settings
-    fig = go.Figure(data=go.Heatmap(
-        z=data,
-        x=list(range(cell_count)),
-        y=list(range(total_time_steps)),
-        colorscale=colorscale,
-        zmin=0,
-        zmax=3,
-        showscale=True,
-        colorbar=dict(
-            title='Pauli Operator',
-            tickvals=[0.5, 1.5, 2.5, 3.5],
-            ticktext=['I', 'X', 'Z', 'Y'],
-            lenmode='pixels',
-            len=200,
-            yanchor='top',
-            y=1
-        ),
-        hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
-        customdata=customdata,
-        # Performance optimizations
-        hoverongaps=False,  # Don't render hover effects for gaps
-        hoverlabel=dict(font=dict(size=10)),  # Smaller hover labels
-        zhoverformat='.0f'  # Simplify hover data format
+    # Create figure with go.Image
+    fig = go.Figure(go.Image(
+        z=rgba,
+        x0=0, dx=1,  # Map to cell indices
+        y0=0, dy=1   # Map to time steps
     ))
     
-    # Set layout with performance optimizations
+    # Add custom colorbar
+    add_custom_colorbar(fig)
+    
+    # Update layout
     fig.update_layout(
         title='1D Clifford QCA Spacetime Diagram',
         xaxis_title='Cell Position',
         yaxis_title='Time Step',
-        yaxis_autorange='reversed',
         xaxis=dict(
-            tickmode='linear', 
-            dtick=max(1, cell_count // 10),  # Fewer ticks
-            constrain='domain'
+            showgrid=False, 
+            zeroline=False, 
+            dtick=max(1, cell_count // 10),
         ),
         yaxis=dict(
-            tickmode='linear', 
-            dtick=max(1, total_time_steps // 10),  # Fewer ticks
-            constrain='domain'
+            showgrid=False, 
+            zeroline=False, 
+            dtick=max(1, total_time_steps // 10),
+            autorange='reversed'
         ),
         width=800,
         height=500,
-        autosize=False,
-        # Enable interactive features
-        uirevision=True,  # Maintain UI state during updates
-        hovermode='closest',    # Simplify hover behavior
-        hoverdistance=10,       # Limit hover distance detection
-        dragmode='zoom',        # Enable zoom selection
-        modebar=dict(
-            orientation='v',
-            bgcolor='rgba(0,0,0,0)'
-        ),
+        dragmode='zoom',
+        hovermode=False,  # Disable hover for now
         margin=dict(l=60, r=30, t=50, b=50),
-        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
-        plot_bgcolor='rgba(0,0,0,0)'    # Transparent plot area
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        uirevision=True
     )
     
     # Configure interactivity
@@ -152,10 +181,6 @@ def make_empty_figure(cell_count, total_time_steps):
         ]
     }
     
-    # Simplify axes
-    fig.update_xaxes(showgrid=False, zeroline=False, showspikes=False)
-    fig.update_yaxes(showgrid=False, zeroline=False, showspikes=False)
-    
     # Attach the config to the figure for use in Streamlit
     fig._config = config
     
@@ -163,7 +188,7 @@ def make_empty_figure(cell_count, total_time_steps):
 
 def update_figure(fig, pauli_strings):
     """
-    Update an existing plotly figure with new data.
+    Update an existing plotly figure with new data using WebGL Image rendering.
     
     Parameters:
     -----------
@@ -176,36 +201,17 @@ def update_figure(fig, pauli_strings):
     --------
     The updated figure.
     """
-    # Get dimensions
-    current_time_steps = len(pauli_strings)
-    if current_time_steps == 0:
+    # Check if there's data to update
+    if not pauli_strings:
         return fig
     
-    cell_count = len(pauli_strings[0])
-    total_time_steps = len(fig.data[0].z)
+    # Convert strings to numeric array
+    numeric_data = pauli_strings_to_numeric(pauli_strings)
     
-    # Convert strings to numeric data
-    if current_time_steps > 0:
-        # Convert strings to numeric data
-        numeric_data = pauli_strings_to_numeric(pauli_strings)
-        
-        # Prepare the full data array
-        max_steps = min(current_time_steps, total_time_steps)
-        z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
-        z_data[:max_steps] = numeric_data[:max_steps]
-    else:
-        z_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+    # Convert to RGBA
+    rgba = pauli_to_rgba(numeric_data)
     
-    # Create customdata
-    customdata = [['I'] * cell_count for _ in range(total_time_steps)]
-    for t, s in enumerate(pauli_strings):
-        if t < total_time_steps:
-            customdata[t] = list(s)
-    
-    # Update the figure
-    fig.plotly_restyle(
-        {'z': [z_data], 'customdata': [customdata]},
-        trace_indexes=[0]
-    )
+    # Update the image
+    fig.update_traces(z=rgba, selector=dict(type='image'))
     
     return fig
