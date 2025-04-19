@@ -128,7 +128,8 @@ def make_empty_figure(cell_count, total_time_steps):
     fig = go.Figure(go.Image(
         z=rgba,
         x0=0, dx=1,  # Map to cell indices
-        y0=0, dy=1   # Map to time steps
+        y0=0, dy=1,  # Map to time steps
+        zmin=0, zmax=3  # Set fixed range for color mapping
     ))
     
     # Add custom colorbar
@@ -143,12 +144,14 @@ def make_empty_figure(cell_count, total_time_steps):
             showgrid=False, 
             zeroline=False, 
             dtick=max(1, cell_count // 10),
+            range=[0, cell_count]  # Set fixed range for x-axis
         ),
         yaxis=dict(
             showgrid=False, 
             zeroline=False, 
             dtick=max(1, total_time_steps // 10),
-            autorange='reversed'
+            autorange='reversed',
+            range=[total_time_steps, 0]  # Set fixed range for y-axis
         ),
         width=800,
         height=500,
@@ -157,7 +160,7 @@ def make_empty_figure(cell_count, total_time_steps):
         margin=dict(l=60, r=30, t=50, b=50),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        uirevision=True
+        uirevision='static'  # Preserve view on updates
     )
     
     # Configure interactivity
@@ -205,11 +208,27 @@ def update_figure(fig, pauli_strings):
     if not pauli_strings:
         return fig
     
+    # Get the total dimensions from the figure's layout
+    yaxis_range = fig.layout.yaxis.range
+    if yaxis_range and len(yaxis_range) == 2:
+        total_time_steps = int(max(yaxis_range))
+    else:
+        # Default if not set
+        total_time_steps = 250
+    
     # Convert strings to numeric array
     numeric_data = pauli_strings_to_numeric(pauli_strings)
+    current_time_steps = numeric_data.shape[0]
+    cell_count = numeric_data.shape[1]
+    
+    # Create full-sized data array with zeros
+    full_data = np.zeros((total_time_steps, cell_count), dtype=np.int8)
+    
+    # Copy the actual data into the beginning of the array
+    full_data[:current_time_steps, :] = numeric_data
     
     # Convert to RGBA
-    rgba = pauli_to_rgba(numeric_data)
+    rgba = pauli_to_rgba(full_data)
     
     # Update the image
     fig.update_traces(z=rgba, selector=dict(type='image'))

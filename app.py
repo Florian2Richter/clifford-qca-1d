@@ -18,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2024-04-19.5 (WebGL with Animation Pauses)**")
+    st.sidebar.markdown("**App Version: 2024-04-19.6 (WebGL with Full Time Dimension)**")
     
     # Custom CSS for better styling
     st.markdown("""
