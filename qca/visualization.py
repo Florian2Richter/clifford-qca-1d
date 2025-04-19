@@ -63,11 +63,11 @@ def make_empty_figure(cell_count, total_time_steps):
     # Define the color scale
     colorscale = [
         [0.0, 'white'],       # I (value 0)
-        [0.25, 'white'],
+        [0.24, 'white'],
         [0.25, '#008080'],    # X (value 1)
-        [0.5, '#008080'],
+        [0.49, '#008080'],
         [0.5, '#FF7F50'],     # Z (value 2)
-        [0.75, '#FF7F50'],
+        [0.74, '#FF7F50'],
         [0.75, '#4A4A4A'],    # Y (value 3)
         [1.0, '#4A4A4A']
     ]
@@ -83,14 +83,22 @@ def make_empty_figure(cell_count, total_time_steps):
         showscale=True,
         colorbar=dict(
             title='Pauli Operator',
-            tickvals=[0, 1, 2, 3],     # Use actual values instead of midpoints
+            tickvals=[0, 1, 2, 3],     # Use actual values
             ticktext=['I', 'X', 'Z', 'Y'],
             lenmode='pixels',
             len=200,
             yanchor='top',
             y=1,
-            thickness=20   # Make colorbar slightly thicker for better visibility
+            thickness=25,   # Make colorbar thicker
+            outlinewidth=1, # Add outline
+            outlinecolor='black',
+            ticks='outside', # Show ticks outside
+            ticklen=5,      # Longer tick marks
+            tickwidth=2,     # Thicker tick marks
+            tickmode='array'  # Ensure discrete ticks
         ),
+        # Make the heatmap use discrete colors without interpolation
+        zauto=False,
         hovertemplate="Time: %{y}<br>Cell: %{x}<br>Operator: %{customdata}<extra></extra>",
         customdata=customdata,
         # Performance optimizations
