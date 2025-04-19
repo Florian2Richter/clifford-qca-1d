@@ -60,12 +60,12 @@ def make_empty_figure(cell_count, total_time_steps):
     data = np.zeros((total_time_steps, cell_count), dtype=np.int8)  # All 'I' operators
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     
-    # Define colors for each Pauli operator with correct mapping
+    # Define colors for each Pauli operator with normalized values (0 to 1)
     color_mapping = [
-        [0, 'white'],     # I (value 0)
-        [1, '#008080'],   # X (value 1)
-        [2, '#FF7F50'],   # Z (value 2)
-        [3, '#4A4A4A']    # Y (value 3)
+        [0.0, 'white'],      # I (value 0)
+        [0.33, '#008080'],   # X (value 1)
+        [0.67, '#FF7F50'],   # Z (value 2)
+        [1.0, '#4A4A4A']     # Y (value 3)
     ]
     
     # Create the heatmap with optimized performance settings
