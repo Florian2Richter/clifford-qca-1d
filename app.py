@@ -6,7 +6,7 @@ import hashlib
 import time  # Re-add time for sleep function
 
 # Global constants
-BATCH_SIZE = 10
+BATCH_SIZE = 5
 
 def setup_page_config():
     """Configure the Streamlit page settings."""
