@@ -3,9 +3,10 @@ import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
 from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure
 import hashlib
+import time  # Re-add time for sleep function
 
 # Global constants
-BATCH_SIZE = 5
+BATCH_SIZE = 10
 
 def setup_page_config():
     """Configure the Streamlit page settings."""
@@ -17,7 +18,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2024-04-19.4 (WebGL Image Rendering)**")
+    st.sidebar.markdown("**App Version: 2024-04-19.5 (WebGL with Animation Pauses)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -210,6 +211,9 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                     key=f"step_{st.session_state.current_step}_{current_hash[:8]}",
                     theme=None
                 )
+                
+                # Add a short pause to make the simulation visible
+                time.sleep(0.2)  # 200ms pause between batch updates
         
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
