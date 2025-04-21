@@ -1,11 +1,13 @@
 import streamlit as st
 import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
-from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure
+from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure, pauli_strings_to_numeric
 import hashlib
+import io
+import plotly.graph_objects as go
 
 # Global constants
-BATCH_SIZE = 5
+BATCH_SIZE = 10
 
 def setup_page_config():
     """Configure the Streamlit page settings."""
@@ -17,7 +19,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.6 (Added Fractal Preset)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.7 (Added FullHD Export)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -468,6 +470,29 @@ def display_results(n, plot_placeholder, current_hash):
         key=f"final_plot_{current_hash[:8]}",
         theme=None
     )
+    
+    # Add high-resolution download button
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("📥 Export as FullHD Wallpaper (1920×1080)", use_container_width=True):
+            with st.spinner("Generating high-resolution image..."):
+                try:
+                    wallpaper_bytes = generate_hires_plot(st.session_state.pauli_strings)
+                    if wallpaper_bytes:
+                        # Create a download button with the generated image
+                        st.download_button(
+                            label="Download FullHD Wallpaper",
+                            data=wallpaper_bytes,
+                            file_name=f"qca_wallpaper_{current_hash[:6]}.png",
+                            mime="image/png",
+                            use_container_width=True
+                        )
+                        st.success("Image generated! Click the button above to download.")
+                    else:
+                        st.error("Could not generate image. Please try again.")
+                except Exception as e:
+                    st.error(f"Error generating high-resolution image: {str(e)}")
+                    raise e
 
 def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash):
     """Handle the initial load of the application."""
@@ -498,6 +523,72 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
 def build_cached_global_operator(n, local_rule):
     """Cached version of build_global_operator to improve performance."""
     return build_global_operator(n, local_rule)
+
+def generate_hires_plot(pauli_strings, width=1920, height=1080):
+    """
+    Generate a high-resolution (FullHD) plot of the QCA simulation for wallpaper use.
+    
+    Parameters:
+    -----------
+    pauli_strings : list of str
+        List of Pauli strings representing the state at each calculated time step.
+    width : int
+        Width of the output image in pixels (default: 1920 for FullHD).
+    height : int
+        Height of the output image in pixels (default: 1080 for FullHD).
+        
+    Returns:
+    --------
+    bytes
+        The PNG image as bytes for download.
+    """
+    # Get dimensions
+    time_steps = len(pauli_strings)
+    cell_count = len(pauli_strings[0]) if pauli_strings else 0
+    
+    if time_steps == 0 or cell_count == 0:
+        return None
+    
+    # Convert strings to numeric data using our mapping (I->0, X->1, Z->2, Y->3)
+    numeric_data = pauli_strings_to_numeric(pauli_strings)
+    
+    # Define colors for each Pauli operator (same as in visualization.py)
+    color_mapping = [
+        [0.0, 'white'],      # I (value 0)
+        [0.33, '#008080'],   # X (value 1)
+        [0.67, '#FF7F50'],   # Z (value 2)
+        [1.0, '#4A4A4A']     # Y (value 3)
+    ]
+    
+    # Create the heatmap with optimized appearance for wallpaper
+    fig = go.Figure(data=go.Heatmap(
+        z=numeric_data,
+        colorscale=color_mapping,
+        zmin=0,
+        zmax=3,
+        showscale=False,  # No colorbar for clean wallpaper
+        hoverinfo='none'  # No hover for static image
+    ))
+    
+    # Set clean layout with no axes or labels
+    fig.update_layout(
+        width=width,
+        height=height,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=0, r=0, t=0, b=0, pad=0),
+        yaxis=dict(
+            scaleanchor="x",
+            scaleratio=1,
+            visible=False
+        ),
+        xaxis=dict(visible=False)
+    )
+    
+    # Convert to PNG bytes
+    img_bytes = fig.to_image(format="png", width=width, height=height, scale=1)
+    
+    return img_bytes
 
 def main():
     """Main function to run the application."""
