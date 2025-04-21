@@ -7,7 +7,7 @@ import io
 import plotly.graph_objects as go
 
 # Global constants
-BATCH_SIZE = 10
+BATCH_SIZE = 5
 
 def setup_page_config():
     """Configure the Streamlit page settings."""
@@ -82,7 +82,7 @@ def setup_ui_elements():
     st.sidebar.markdown("""
     Hi! Whether you're deep into mathematics and quantum theory — or just here for the eye candy — you're in the right place.
 
-    This app lets you explore a 1D Clifford Quantum Cellular Automaton. You can tweak the rules, hit "run", and watch the system evolve into beautiful, fractal-like patterns. Just for fun? Export your favorite result as a high-resolution wallpaper!
+    This app lets you explore a 1D Clifford Quantum Cellular Automaton. You can tweak the rules, lean back, and watch the system evolve into beautiful, fractal-like patterns. Just for fun? Export your favorite result as a high-resolution wallpaper!
 
     Curious what's really going on under the hood?
     Take a dive into the quantum depths <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">in this blog post</a>, where I explain the science behind Clifford QCAs and how they work.
@@ -494,7 +494,7 @@ def display_results(n, plot_placeholder, current_hash):
             except Exception as e:
                 st.error(f"Error generating high-resolution image: {str(e)}")
                 st.exception(e)  # Show detailed error information
-    else:
+else:
         # Show resolution dropdown when button is not yet clicked
         selected_resolution = col2.selectbox(
             "",
