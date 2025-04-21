@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.4 (Enhanced Matrix UI)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.3 (Matrix UI Fixed)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -31,34 +31,6 @@ def setup_page_config():
         .matrix-container { margin-bottom: 1rem; padding: 8px; border-radius: 5px; background-color: #f5f7f9; }
         .matrix-label { font-weight: bold; margin-bottom: 5px; font-size: 16px; color: #333; }
         [data-testid="stNumberInput"] { margin-bottom: 0 !important; }
-        
-        /* Enhanced number input for matrices */
-        [data-testid="stNumberInput"] > div > div > div:first-child {
-            width: 40px !important;
-        }
-        
-        /* Improve plus/minus buttons */
-        button[aria-label="Increment"] {
-            background-color: #e6f4ea !important;
-            color: #028a0f !important;
-            font-weight: bold !important;
-            width: 28px !important;
-            height: 28px !important;
-        }
-        
-        button[aria-label="Decrement"] {
-            background-color: #fce8e6 !important;
-            color: #d93025 !important;
-            font-weight: bold !important;
-            width: 28px !important;
-            height: 28px !important;
-        }
-        
-        /* Add matrix separation */
-        .matrix-separator {
-            border-left: 2px dashed #ccc;
-            margin: 0 8px;
-        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -113,12 +85,10 @@ def setup_ui_elements():
     """, unsafe_allow_html=True)
     
     # Matrix headers in one row
-    mat_headers = st.sidebar.columns([1, 0.1, 1, 0.1, 1])
+    mat_headers = st.sidebar.columns(3)
     mat_headers[0].markdown("<div style='text-align: center; font-weight: bold;'>M-1 (Left)</div>", unsafe_allow_html=True)
-    mat_headers[1].markdown("<div class='matrix-separator'></div>", unsafe_allow_html=True)
-    mat_headers[2].markdown("<div style='text-align: center; font-weight: bold;'>M0 (Center)</div>", unsafe_allow_html=True)
-    mat_headers[3].markdown("<div class='matrix-separator'></div>", unsafe_allow_html=True)
-    mat_headers[4].markdown("<div style='text-align: center; font-weight: bold;'>M1 (Right)</div>", unsafe_allow_html=True)
+    mat_headers[1].markdown("<div style='text-align: center; font-weight: bold;'>M0 (Center)</div>", unsafe_allow_html=True)
+    mat_headers[2].markdown("<div style='text-align: center; font-weight: bold;'>M1 (Right)</div>", unsafe_allow_html=True)
     
     # Create matrices with shared structure
     m_left = np.zeros((2, 2), dtype=int)
@@ -126,26 +96,22 @@ def setup_ui_elements():
     m_right = np.zeros((2, 2), dtype=int)
     
     # First row of all matrices
-    row1_cols = st.sidebar.columns([1, 1, 0.2, 1, 1, 0.2, 1, 1])
-    m_left[0, 0] = row1_cols[0].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00", label_visibility="collapsed")
-    m_left[0, 1] = row1_cols[1].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01", label_visibility="collapsed")
-    row1_cols[2].markdown("<div class='matrix-separator'></div>", unsafe_allow_html=True)
-    m_center[0, 0] = row1_cols[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00", label_visibility="collapsed")
-    m_center[0, 1] = row1_cols[4].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01", label_visibility="collapsed")
-    row1_cols[5].markdown("<div class='matrix-separator'></div>", unsafe_allow_html=True)
-    m_right[0, 0] = row1_cols[6].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00", label_visibility="collapsed")
-    m_right[0, 1] = row1_cols[7].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01", label_visibility="collapsed")
+    row1 = st.sidebar.columns(6)
+    m_left[0, 0] = row1[0].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00", label_visibility="collapsed")
+    m_left[0, 1] = row1[1].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01", label_visibility="collapsed")
+    m_center[0, 0] = row1[2].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00", label_visibility="collapsed")
+    m_center[0, 1] = row1[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01", label_visibility="collapsed")
+    m_right[0, 0] = row1[4].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00", label_visibility="collapsed")
+    m_right[0, 1] = row1[5].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01", label_visibility="collapsed")
     
     # Second row of all matrices
-    row2_cols = st.sidebar.columns([1, 1, 0.2, 1, 1, 0.2, 1, 1])
-    m_left[1, 0] = row2_cols[0].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10", label_visibility="collapsed")
-    m_left[1, 1] = row2_cols[1].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11", label_visibility="collapsed")
-    row2_cols[2].markdown("<div class='matrix-separator'></div>", unsafe_allow_html=True)
-    m_center[1, 0] = row2_cols[3].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10", label_visibility="collapsed")
-    m_center[1, 1] = row2_cols[4].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11", label_visibility="collapsed")
-    row2_cols[5].markdown("<div class='matrix-separator'></div>", unsafe_allow_html=True)
-    m_right[1, 0] = row2_cols[6].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10", label_visibility="collapsed")
-    m_right[1, 1] = row2_cols[7].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11", label_visibility="collapsed")
+    row2 = st.sidebar.columns(6)
+    m_left[1, 0] = row2[0].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10", label_visibility="collapsed")
+    m_left[1, 1] = row2[1].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11", label_visibility="collapsed")
+    m_center[1, 0] = row2[2].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10", label_visibility="collapsed")
+    m_center[1, 1] = row2[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11", label_visibility="collapsed")
+    m_right[1, 0] = row2[4].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10", label_visibility="collapsed")
+    m_right[1, 1] = row2[5].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11", label_visibility="collapsed")
     
     # Convert the three matrices to the required local rule format
     local_rule = matrices_to_local_rule(m_left, m_center, m_right)
