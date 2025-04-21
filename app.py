@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.0 (Added Presets)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.1 (Preset Configurations)**")
     
     # Add presets dropdown at the top of the sidebar
     st.sidebar.markdown('<h3 class="sidebar-header">Preset Configurations</h3>', unsafe_allow_html=True)
