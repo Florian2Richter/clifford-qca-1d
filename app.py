@@ -19,7 +19,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.7 (Added FullHD Export)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.8 (Multi-Resolution Export)**")
     
     # Custom CSS for better styling
     st.markdown("""
