@@ -17,49 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.1 (Preset Configurations)**")
-    
-    # Add presets dropdown at the top of the sidebar
-    st.sidebar.markdown('<h3 class="sidebar-header">Preset Configurations</h3>', unsafe_allow_html=True)
-    
-    # Define preset configurations
-    presets = {
-        "Custom": {
-            "description": "Custom configuration (current settings)",
-            "matrices": {
-                "m_left": np.array([[1, 0], [0, 1]]),
-                "m_center": np.array([[1, 1], [0, 1]]),
-                "m_right": np.array([[0, 1], [1, 0]])
-            },
-            "initial_state": {
-                "num_operators": 1,
-                "operators": ["X"],
-                "positions": [n//2]
-            }
-        },
-        "Glider": {
-            "description": "A 'glider' pattern that propagates through the lattice",
-            "matrices": {
-                "m_left": np.array([[0, 0], [0, 1]]),
-                "m_center": np.array([[0, 1], [1, 0]]),
-                "m_right": np.array([[0, 0], [0, 1]])
-            },
-            "initial_state": {
-                "num_operators": 2,
-                "operators": ["X", "Z"],
-                "positions": [n//2, n//2 + 1]
-            }
-        }
-    }
-    
-    # Select a preset
-    selected_preset = st.sidebar.selectbox(
-        "Choose a preset configuration:",
-        list(presets.keys())
-    )
-    
-    if selected_preset != "Custom":
-        st.sidebar.info(presets[selected_preset]["description"])
+    st.sidebar.markdown("**App Version: 2025-04-21.2 (Fixed Presets)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -176,6 +134,48 @@ def setup_ui_elements():
     col1, col2 = st.sidebar.columns(2)
     n = col1.number_input("Number of cells", min_value=3, value=500, step=1)
     T_steps = col2.number_input("Time steps", min_value=1, value=250, step=1)
+    
+    # Add presets dropdown at the top of the sidebar
+    st.sidebar.markdown('<h3 class="sidebar-header">Preset Configurations</h3>', unsafe_allow_html=True)
+    
+    # Define preset configurations
+    presets = {
+        "Custom": {
+            "description": "Custom configuration (current settings)",
+            "matrices": {
+                "m_left": np.array([[1, 0], [0, 1]]),
+                "m_center": np.array([[1, 1], [0, 1]]),
+                "m_right": np.array([[0, 1], [1, 0]])
+            },
+            "initial_state": {
+                "num_operators": 1,
+                "operators": ["X"],
+                "positions": [n//2]
+            }
+        },
+        "Glider": {
+            "description": "A 'glider' pattern that propagates through the lattice",
+            "matrices": {
+                "m_left": np.array([[0, 0], [0, 1]]),
+                "m_center": np.array([[0, 1], [1, 0]]),
+                "m_right": np.array([[0, 0], [0, 1]])
+            },
+            "initial_state": {
+                "num_operators": 2,
+                "operators": ["X", "Z"],
+                "positions": [n//2, n//2 + 1]
+            }
+        }
+    }
+    
+    # Select a preset
+    selected_preset = st.sidebar.selectbox(
+        "Choose a preset configuration:",
+        list(presets.keys())
+    )
+    
+    if selected_preset != "Custom":
+        st.sidebar.info(presets[selected_preset]["description"])
     
     # Local rule matrix input
     st.sidebar.markdown('<h3 class="sidebar-header">Choose your Local Rule Matrices</h3>', unsafe_allow_html=True)
