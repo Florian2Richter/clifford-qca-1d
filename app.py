@@ -494,9 +494,9 @@ def display_results(n, plot_placeholder, current_hash):
             except Exception as e:
                 st.error(f"Error generating high-resolution image: {str(e)}")
                 st.exception(e)  # Show detailed error information
-else:
+    else:
         # Show resolution dropdown when button is not yet clicked
-        selected_resolution = col2.selectbox(
+        col2.selectbox(
             "",
             options=list(resolution_options.keys()),
             index=0,
