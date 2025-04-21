@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.5 (Corrected Glider Preset)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.6 (Added Fractal Preset)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -164,6 +164,19 @@ def setup_ui_elements():
                 "num_operators": 2,
                 "operators": ["X", "Z"],
                 "positions": [n//2, n//2 + 1]
+            }
+        },
+        "Fractal": {
+            "description": "A pattern that creates self-similar fractal structures",
+            "matrices": {
+                "m_left": np.array([[1, 0], [0, 0]]),
+                "m_center": np.array([[1, 1], [1, 0]]),
+                "m_right": np.array([[1, 0], [0, 0]])
+            },
+            "initial_state": {
+                "num_operators": 1,
+                "operators": ["X"],
+                "positions": [250]
             }
         }
     }
