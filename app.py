@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.3 (Matrix UI Fixed)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.5 (Dropdown Matrix UI)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -31,6 +31,35 @@ def setup_page_config():
         .matrix-container { margin-bottom: 1rem; padding: 8px; border-radius: 5px; background-color: #f5f7f9; }
         .matrix-label { font-weight: bold; margin-bottom: 5px; font-size: 16px; color: #333; }
         [data-testid="stNumberInput"] { margin-bottom: 0 !important; }
+        
+        /* Dropdown styling */
+        [data-testid="stSelectbox"] {
+            margin-bottom: 0 !important;
+        }
+        
+        /* Add padding between matrix columns */
+        .matrix-col {
+            padding: 0 5px;
+        }
+        
+        /* Custom CSS for matrix containers */
+        .matrix-left {
+            background-color: rgba(200, 230, 255, 0.2);
+            border-radius: 5px;
+            padding: 5px;
+        }
+        
+        .matrix-center {
+            background-color: rgba(230, 255, 200, 0.2);
+            border-radius: 5px;
+            padding: 5px;
+        }
+        
+        .matrix-right {
+            background-color: rgba(255, 230, 200, 0.2);
+            border-radius: 5px;
+            padding: 5px;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -85,10 +114,10 @@ def setup_ui_elements():
     """, unsafe_allow_html=True)
     
     # Matrix headers in one row
-    mat_headers = st.sidebar.columns(3)
-    mat_headers[0].markdown("<div style='text-align: center; font-weight: bold;'>M-1 (Left)</div>", unsafe_allow_html=True)
-    mat_headers[1].markdown("<div style='text-align: center; font-weight: bold;'>M0 (Center)</div>", unsafe_allow_html=True)
-    mat_headers[2].markdown("<div style='text-align: center; font-weight: bold;'>M1 (Right)</div>", unsafe_allow_html=True)
+    mat_headers = st.sidebar.columns([0.05, 0.54, 0.1, 0.54, 0.1, 0.54, 0.05])
+    mat_headers[1].markdown("<div class='matrix-left' style='text-align: center; font-weight: bold; padding: 5px;'>M-1 (Left)</div>", unsafe_allow_html=True)
+    mat_headers[3].markdown("<div class='matrix-center' style='text-align: center; font-weight: bold; padding: 5px;'>M0 (Center)</div>", unsafe_allow_html=True)
+    mat_headers[5].markdown("<div class='matrix-right' style='text-align: center; font-weight: bold; padding: 5px;'>M1 (Right)</div>", unsafe_allow_html=True)
     
     # Create matrices with shared structure
     m_left = np.zeros((2, 2), dtype=int)
@@ -96,22 +125,52 @@ def setup_ui_elements():
     m_right = np.zeros((2, 2), dtype=int)
     
     # First row of all matrices
-    row1 = st.sidebar.columns(6)
-    m_left[0, 0] = row1[0].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00", label_visibility="collapsed")
-    m_left[0, 1] = row1[1].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01", label_visibility="collapsed")
-    m_center[0, 0] = row1[2].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00", label_visibility="collapsed")
-    m_center[0, 1] = row1[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01", label_visibility="collapsed")
-    m_right[0, 0] = row1[4].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00", label_visibility="collapsed")
-    m_right[0, 1] = row1[5].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01", label_visibility="collapsed")
+    row1 = st.sidebar.columns([0.05, 0.27, 0.27, 0.1, 0.27, 0.27, 0.1, 0.27, 0.27, 0.05])
+    
+    # M-1 (Left) with container styling
+    row1[1].markdown("<div class='matrix-left'></div>", unsafe_allow_html=True)
+    m_left[0, 0] = 1 if row1[1].selectbox("", [0, 1], index=1, key="m_left_00", label_visibility="collapsed") == 1 else 0
+    m_left[0, 1] = 1 if row1[2].selectbox("", [0, 1], index=0, key="m_left_01", label_visibility="collapsed") == 1 else 0
+    
+    # Spacing
+    row1[3].write("")
+    
+    # M0 (Center) with container styling
+    row1[4].markdown("<div class='matrix-center'></div>", unsafe_allow_html=True)
+    m_center[0, 0] = 1 if row1[4].selectbox("", [0, 1], index=1, key="m_center_00", label_visibility="collapsed") == 1 else 0
+    m_center[0, 1] = 1 if row1[5].selectbox("", [0, 1], index=1, key="m_center_01", label_visibility="collapsed") == 1 else 0
+    
+    # Spacing
+    row1[6].write("")
+    
+    # M1 (Right) with container styling
+    row1[7].markdown("<div class='matrix-right'></div>", unsafe_allow_html=True)
+    m_right[0, 0] = 1 if row1[7].selectbox("", [0, 1], index=0, key="m_right_00", label_visibility="collapsed") == 1 else 0
+    m_right[0, 1] = 1 if row1[8].selectbox("", [0, 1], index=1, key="m_right_01", label_visibility="collapsed") == 1 else 0
     
     # Second row of all matrices
-    row2 = st.sidebar.columns(6)
-    m_left[1, 0] = row2[0].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10", label_visibility="collapsed")
-    m_left[1, 1] = row2[1].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11", label_visibility="collapsed")
-    m_center[1, 0] = row2[2].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10", label_visibility="collapsed")
-    m_center[1, 1] = row2[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11", label_visibility="collapsed")
-    m_right[1, 0] = row2[4].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10", label_visibility="collapsed")
-    m_right[1, 1] = row2[5].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11", label_visibility="collapsed")
+    row2 = st.sidebar.columns([0.05, 0.27, 0.27, 0.1, 0.27, 0.27, 0.1, 0.27, 0.27, 0.05])
+    
+    # M-1 (Left)
+    row2[1].markdown("<div class='matrix-left'></div>", unsafe_allow_html=True)
+    m_left[1, 0] = 1 if row2[1].selectbox("", [0, 1], index=0, key="m_left_10", label_visibility="collapsed") == 1 else 0
+    m_left[1, 1] = 1 if row2[2].selectbox("", [0, 1], index=1, key="m_left_11", label_visibility="collapsed") == 1 else 0
+    
+    # Spacing
+    row2[3].write("")
+    
+    # M0 (Center)
+    row2[4].markdown("<div class='matrix-center'></div>", unsafe_allow_html=True)
+    m_center[1, 0] = 1 if row2[4].selectbox("", [0, 1], index=0, key="m_center_10", label_visibility="collapsed") == 1 else 0
+    m_center[1, 1] = 1 if row2[5].selectbox("", [0, 1], index=1, key="m_center_11", label_visibility="collapsed") == 1 else 0
+    
+    # Spacing
+    row2[6].write("")
+    
+    # M1 (Right)
+    row2[7].markdown("<div class='matrix-right'></div>", unsafe_allow_html=True)
+    m_right[1, 0] = 1 if row2[7].selectbox("", [0, 1], index=1, key="m_right_10", label_visibility="collapsed") == 1 else 0
+    m_right[1, 1] = 1 if row2[8].selectbox("", [0, 1], index=0, key="m_right_11", label_visibility="collapsed") == 1 else 0
     
     # Convert the three matrices to the required local rule format
     local_rule = matrices_to_local_rule(m_left, m_center, m_right)
