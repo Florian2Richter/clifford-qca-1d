@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.6 (Number Input Matrix UI)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.7 (Fixed Matrix UI)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -138,44 +138,35 @@ def setup_ui_elements():
     </div>
     """, unsafe_allow_html=True)
     
-    # Create three columns for matrix headers
-    st.sidebar.markdown("<div style='display: flex; justify-content: space-between; margin: 10px 0;'>"
-                       "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-left'>M-1 (Left)</div>"
-                       "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-center'>M0 (Center)</div>"
-                       "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-right'>M1 (Right)</div>"
-                       "</div>", unsafe_allow_html=True)
-    
     # Create matrices in a simple grid layout
     m_left = np.zeros((2, 2), dtype=int)
     m_center = np.zeros((2, 2), dtype=int)
     m_right = np.zeros((2, 2), dtype=int)
     
-    # Generate matrix layout with number inputs
-    left_col, center_col, right_col = st.sidebar.columns(3)
+    # Matrix headers
+    st.sidebar.markdown("<div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>"
+                      "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-left'>M-1 (Left)</div>"
+                      "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-center'>M0 (Center)</div>"
+                      "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-right'>M1 (Right)</div>"
+                      "</div>", unsafe_allow_html=True)
     
-    # M-1 (Left) Matrix
-    with left_col:
-        col1, col2 = st.columns(2)
-        m_left[0, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00")
-        m_left[0, 1] = col2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01")
-        m_left[1, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10")
-        m_left[1, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11")
+    # First row of matrices - use 6 columns side by side
+    row1 = st.sidebar.columns(6)
+    m_left[0, 0] = row1[0].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00")
+    m_left[0, 1] = row1[1].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01")
+    m_center[0, 0] = row1[2].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00")
+    m_center[0, 1] = row1[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01")
+    m_right[0, 0] = row1[4].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00")
+    m_right[0, 1] = row1[5].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01")
     
-    # M0 (Center) Matrix
-    with center_col:
-        col1, col2 = st.columns(2)
-        m_center[0, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00")
-        m_center[0, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01")
-        m_center[1, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10")
-        m_center[1, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11")
-    
-    # M1 (Right) Matrix
-    with right_col:
-        col1, col2 = st.columns(2)
-        m_right[0, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00")
-        m_right[0, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01")
-        m_right[1, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10")
-        m_right[1, 1] = col2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11")
+    # Second row of matrices - use 6 columns side by side
+    row2 = st.sidebar.columns(6)
+    m_left[1, 0] = row2[0].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10")
+    m_left[1, 1] = row2[1].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11")
+    m_center[1, 0] = row2[2].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10")
+    m_center[1, 1] = row2[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11")
+    m_right[1, 0] = row2[4].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10")
+    m_right[1, 1] = row2[5].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11")
     
     # Convert the three matrices to the required local rule format
     local_rule = matrices_to_local_rule(m_left, m_center, m_right)
