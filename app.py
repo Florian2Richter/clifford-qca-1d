@@ -300,9 +300,6 @@ def create_initial_state_custom(n, operators, positions):
     pauli_str = ''.join(pauli_string)
     state = pauli_string_to_state(pauli_str)
     
-    # Display the resulting Pauli string
-    st.sidebar.info(f"Initial state: {pauli_str}")
-    
     return state
 
 def get_params_hash(n, T_steps, local_rule, initial_state):
