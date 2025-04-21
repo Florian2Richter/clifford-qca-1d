@@ -429,11 +429,16 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                 theme=None
             )
         
+        progress_bar = st.progress(0)
         for step in range(st.session_state.current_step, st.session_state.target_steps):
             next_state, next_pauli = calculate_step(st.session_state.states[-1])
             st.session_state.states.append(next_state.copy())
             st.session_state.pauli_strings.append(next_pauli)
             st.session_state.current_step += 1
+            
+            # Update progress bar
+            progress = st.session_state.current_step / st.session_state.target_steps
+            progress_bar.progress(progress)
 
             if (st.session_state.current_step % BATCH_SIZE == 0 or 
                     st.session_state.current_step == st.session_state.target_steps):
@@ -447,14 +452,23 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                     theme=None
                 )
         
+        # Always set these flags at the end of simulation
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
-        status_placeholder.success("Simulation complete!")
+        
+        # Clear the status placeholder before adding success message
+        status_placeholder.empty()
+        
+        # Force a rerun to ensure display_results is shown
+        st.rerun()
         
     elif not st.session_state.simulation_complete:
+        # This handles the case where we haven't yet marked the simulation as complete
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
-        status_placeholder.success("Simulation complete!")
+        status_placeholder.empty()
+        # Force a rerun to ensure display_results is shown
+        st.rerun()
 
 def display_results(n, plot_placeholder, current_hash):
     """Display the final simulation results."""
@@ -471,10 +485,17 @@ def display_results(n, plot_placeholder, current_hash):
         theme=None
     )
     
-    # Add high-resolution download button
+    # Add export section with a clear success message and divider
+    st.success("✅ Simulation complete!")
+    st.markdown("---")
+    
+    # Create a visually distinct export section
+    st.markdown("### 🖼️ Export Options")
+    
+    # Add high-resolution download button in a centered layout
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("📥 Export as FullHD Wallpaper (1920×1080)", use_container_width=True):
+        if st.button("📥 Export as FullHD Wallpaper (1920×1080)", use_container_width=True, key="export_button"):
             with st.spinner("Generating high-resolution image..."):
                 try:
                     wallpaper_bytes = generate_hires_plot(st.session_state.pauli_strings)
@@ -492,7 +513,7 @@ def display_results(n, plot_placeholder, current_hash):
                         st.error("Could not generate image. Please try again.")
                 except Exception as e:
                     st.error(f"Error generating high-resolution image: {str(e)}")
-                    raise e
+                    st.exception(e)  # Show detailed error information
 
 def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash):
     """Handle the initial load of the application."""
@@ -612,10 +633,11 @@ def main():
     
     # App execution flow
     with st.spinner("Processing simulation..."):
-        if st.session_state.initialized and st.session_state.simulation_running:
-            run_simulation(n, plot_placeholder, status_placeholder, current_hash)
-        elif st.session_state.simulation_complete:
+        # Check completion first, then check if running, finally handle initial state
+        if st.session_state.simulation_complete:
             display_results(n, plot_placeholder, current_hash)
+        elif st.session_state.initialized and st.session_state.simulation_running:
+            run_simulation(n, plot_placeholder, status_placeholder, current_hash)
         elif not st.session_state.initialized:
             handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash)
 
