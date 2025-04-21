@@ -18,82 +18,33 @@ def setup_page_config():
         initial_sidebar_state="expanded"
     )
     
-    # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.8 (Multi-Resolution Export)**")
-    
     # Custom CSS for better styling
     st.markdown("""
     <style>
-        .main-header { font-size:2.5rem; color:#1E88E5; text-align:center; margin-bottom:1rem; }
-        .sub-header { font-size:1.5rem; color:#424242; margin-top:1.5rem; margin-bottom:1rem; }
-        .description { font-size:1rem; color:#616161; margin-bottom:1.5rem; }
-        .sidebar-header { font-size:24px !important; font-weight:bold !important; margin-top:1rem !important; }
-        .stMetric { background-color:#f0f2f6; padding:10px; border-radius:5px; }
-        
-        /* Improved selectbox styling */
-        [data-testid="stSelectbox"] {
-            margin-bottom: 0 !important;
-        }
-        
-        /* Make the dropdown text more visible */
-        .st-bi {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-        }
-        
-        /* Style for the matrix containers */
-        .matrix-section {
-            background-color: #f5f7f9;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        
-        /* Matrix background colors */
-        .matrix-left {
-            background-color: rgba(200, 230, 255, 0.3);
-            border-radius: 5px;
-            padding: 5px;
-        }
-        
-        .matrix-center {
-            background-color: rgba(230, 255, 200, 0.3);
-            border-radius: 5px;
-            padding: 5px;
-        }
-        
-        .matrix-right {
-            background-color: rgba(255, 230, 200, 0.3);
-            border-radius: 5px;
-            padding: 5px;
-        }
-        
-        /* Enhance dropdown appearance */
-        [data-testid="stSelectbox"] > div > div > div {
-            font-weight: bold !important;
-            text-align: center !important;
-            font-size: 16px !important;
-        }
-        
-        /* Better number input styling */
-        [data-testid="stNumberInput"] > div {
-            flex-direction: row !important;
-        }
-        
-        [data-testid="stNumberInput"] input {
-            text-align: center !important;
-            font-size: 16px !important;
-            font-weight: bold !important;
-            width: 50px !important;
-        }
-        
-        /* Improve button appearance */
-        button.step-down, button.step-up {
-            height: 30px !important;
-            width: 30px !important;
-            background-color: #f0f2f6 !important;
-        }
+    .main-header {
+        color: #4B0082;
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    .description {
+        color: #555;
+        font-size: 1.0rem;
+        margin-bottom: 2rem;
+    }
+    .sidebar-header {
+        color: #4B0082;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+    div[data-testid="stSidebar"] {
+        background-color: #f8f9fa;
+        border-right: 1px solid #eee;
+        padding: 1rem;
+    }
+    .stAlert {
+        padding: 0.75rem;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -125,11 +76,21 @@ def setup_ui_elements():
     The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lattice over time.
     </div>
     """, unsafe_allow_html=True)
-
-# Sidebar for simulation parameters
+    
+    # Sidebar for about section first
+    st.sidebar.markdown('<h3 class="sidebar-header">What is this App about?</h3>', unsafe_allow_html=True)
     st.sidebar.markdown("""
-    <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">What am I seeing here?</a>
+    Hi! Whether you're deep into mathematics and quantum theory — or just here for the eye candy — you're in the right place.
+
+    This app lets you explore a 1D Clifford Quantum Cellular Automaton. You can tweak the rules, hit "run", and watch the system evolve into beautiful, fractal-like patterns. Just for fun? Export your favorite result as a high-resolution wallpaper!
+
+    Curious what's really going on under the hood?
+    Take a dive into the quantum depths <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">in this blog post</a>, where I explain the science behind Clifford QCAs and how they work.
+
+    Have fun exploring — whatever your angle!
     """, unsafe_allow_html=True)
+    
+    # Simulation parameters section
     st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
     
     # Create two columns for simulation parameters
@@ -290,6 +251,10 @@ def setup_ui_elements():
     # Create placeholders for plot and status
     plot_placeholder = st.empty()
     status_placeholder = st.empty()
+    
+    # Add version indicator at the bottom of the sidebar
+    st.sidebar.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
+    st.sidebar.markdown("**App Version: 2025-04-21.8 (Multi-Resolution Export)**")
     
     return n, T_steps, local_rule, initial_state, plot_placeholder, status_placeholder
 
