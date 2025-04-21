@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.1 (Matrix UI)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.2 (Matrix UI)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -79,49 +79,43 @@ def setup_ui_elements():
     st.sidebar.markdown("""
     <div class="description">
     Enter values (0 or 1) for each cell in the three matrices.
-    These matrices define how each cell updates based on its left neighbor (M_{-1}), 
-    its own state (M_{0}), and its right neighbor (M_{1}).
+    These matrices define how each cell updates based on its left neighbor (M-1), 
+    its own state (M0), and its right neighbor (M1).
     </div>
     """, unsafe_allow_html=True)
     
-    # Matrix M_{-1} (Left neighbor)
-    st.sidebar.markdown("""
-    <div class="matrix-container">
-        <div class="matrix-label">M_{-1} (Left neighbor)</div>
-    </div>
-    """, unsafe_allow_html=True)
-    col1, col2 = st.sidebar.columns(2)
-    m_left = np.zeros((2, 2), dtype=int)
-    m_left[0, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00", label_visibility="collapsed")
-    m_left[0, 1] = col2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01", label_visibility="collapsed")
-    m_left[1, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10", label_visibility="collapsed")
-    m_left[1, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11", label_visibility="collapsed")
+    # Create three columns for the matrices
+    mat_col1, mat_col2, mat_col3 = st.sidebar.columns(3)
     
-    # Matrix M_{0} (Center/self)
-    st.sidebar.markdown("""
-    <div class="matrix-container">
-        <div class="matrix-label">M_{0} (Center/self)</div>
-    </div>
-    """, unsafe_allow_html=True)
-    col1, col2 = st.sidebar.columns(2)
-    m_center = np.zeros((2, 2), dtype=int)
-    m_center[0, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00", label_visibility="collapsed")
-    m_center[0, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01", label_visibility="collapsed")
-    m_center[1, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10", label_visibility="collapsed")
-    m_center[1, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11", label_visibility="collapsed")
+    # Matrix M-1 (Left neighbor)
+    with mat_col1:
+        st.markdown("<div style='text-align: center; font-weight: bold;'>M-1 (Left)</div>", unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        m_left = np.zeros((2, 2), dtype=int)
+        m_left[0, 0] = c1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00", label_visibility="collapsed")
+        m_left[0, 1] = c2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01", label_visibility="collapsed")
+        m_left[1, 0] = c1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10", label_visibility="collapsed")
+        m_left[1, 1] = c2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11", label_visibility="collapsed")
     
-    # Matrix M_{1} (Right neighbor)
-    st.sidebar.markdown("""
-    <div class="matrix-container">
-        <div class="matrix-label">M_{1} (Right neighbor)</div>
-    </div>
-    """, unsafe_allow_html=True)
-    col1, col2 = st.sidebar.columns(2)
-    m_right = np.zeros((2, 2), dtype=int)
-    m_right[0, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00", label_visibility="collapsed")
-    m_right[0, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01", label_visibility="collapsed")
-    m_right[1, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10", label_visibility="collapsed")
-    m_right[1, 1] = col2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11", label_visibility="collapsed")
+    # Matrix M0 (Center/self)
+    with mat_col2:
+        st.markdown("<div style='text-align: center; font-weight: bold;'>M0 (Center)</div>", unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        m_center = np.zeros((2, 2), dtype=int)
+        m_center[0, 0] = c1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00", label_visibility="collapsed")
+        m_center[0, 1] = c2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01", label_visibility="collapsed")
+        m_center[1, 0] = c1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10", label_visibility="collapsed")
+        m_center[1, 1] = c2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11", label_visibility="collapsed")
+    
+    # Matrix M1 (Right neighbor)
+    with mat_col3:
+        st.markdown("<div style='text-align: center; font-weight: bold;'>M1 (Right)</div>", unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        m_right = np.zeros((2, 2), dtype=int)
+        m_right[0, 0] = c1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00", label_visibility="collapsed")
+        m_right[0, 1] = c2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01", label_visibility="collapsed")
+        m_right[1, 0] = c1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10", label_visibility="collapsed")
+        m_right[1, 1] = c2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11", label_visibility="collapsed")
     
     # Convert the three matrices to the required local rule format
     local_rule = matrices_to_local_rule(m_left, m_center, m_right)
