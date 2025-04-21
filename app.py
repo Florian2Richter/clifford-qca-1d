@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20 (Baseline)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.1 (Matrix UI)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -27,6 +27,10 @@ def setup_page_config():
         .description { font-size:1rem; color:#616161; margin-bottom:1.5rem; }
         .sidebar-header { font-size:24px !important; font-weight:bold !important; margin-top:1rem !important; }
         .stMetric { background-color:#f0f2f6; padding:10px; border-radius:5px; }
+        /* Matrix styling */
+        .matrix-container { margin-bottom: 1rem; padding: 8px; border-radius: 5px; background-color: #f5f7f9; }
+        .matrix-label { font-weight: bold; margin-bottom: 5px; font-size: 16px; color: #333; }
+        [data-testid="stNumberInput"] { margin-bottom: 0 !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -68,25 +72,56 @@ def setup_ui_elements():
     T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=250, step=1)
     
     # Local rule matrix input
-    st.sidebar.markdown('<h3 class="sidebar-header">Local Rule Matrix (2x6 over F2)</h3>', unsafe_allow_html=True)
+    st.sidebar.markdown('<h3 class="sidebar-header">Choose your Local Rule Matrices</h3>', unsafe_allow_html=True)
     st.sidebar.markdown("""
     <div class="description">
-    Enter each row as 6 numbers (0 or 1) separated by spaces.
-    The local rule determines how each cell updates based on its neighbors.
-    
-    For example, the identity transformation would be:
-    ```
-    0 0 1 0 0 0  (first row)
-    0 0 0 1 0 0  (second row)
-    ```
-    This leaves each cell's state unchanged as it only uses the identity matrix in the center block.
+    Enter values (0 or 1) for each cell in the three matrices.
+    These matrices define how each cell updates based on its left neighbor (M_{-1}), 
+    its own state (M_{0}), and its right neighbor (M_{1}).
     </div>
     """, unsafe_allow_html=True)
     
-    row1_input = st.sidebar.text_input("Row 1 (for A_left and A_center)", "1 0 1 1 0 1")
-    row2_input = st.sidebar.text_input("Row 2 (for A_center and A_right)", "0 1 0 1 1 0")
+    # Matrix M_{-1} (Left neighbor)
+    st.sidebar.markdown("""
+    <div class="matrix-container">
+        <div class="matrix-label">M_{-1} (Left neighbor)</div>
+    </div>
+    """, unsafe_allow_html=True)
+    col1, col2 = st.sidebar.columns(2)
+    m_left = np.zeros((2, 2), dtype=int)
+    m_left[0, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00", label_visibility="collapsed")
+    m_left[0, 1] = col2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01", label_visibility="collapsed")
+    m_left[1, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10", label_visibility="collapsed")
+    m_left[1, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11", label_visibility="collapsed")
     
-    local_rule = parse_local_rule(row1_input, row2_input)
+    # Matrix M_{0} (Center/self)
+    st.sidebar.markdown("""
+    <div class="matrix-container">
+        <div class="matrix-label">M_{0} (Center/self)</div>
+    </div>
+    """, unsafe_allow_html=True)
+    col1, col2 = st.sidebar.columns(2)
+    m_center = np.zeros((2, 2), dtype=int)
+    m_center[0, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00", label_visibility="collapsed")
+    m_center[0, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01", label_visibility="collapsed")
+    m_center[1, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10", label_visibility="collapsed")
+    m_center[1, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11", label_visibility="collapsed")
+    
+    # Matrix M_{1} (Right neighbor)
+    st.sidebar.markdown("""
+    <div class="matrix-container">
+        <div class="matrix-label">M_{1} (Right neighbor)</div>
+    </div>
+    """, unsafe_allow_html=True)
+    col1, col2 = st.sidebar.columns(2)
+    m_right = np.zeros((2, 2), dtype=int)
+    m_right[0, 0] = col1.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00", label_visibility="collapsed")
+    m_right[0, 1] = col2.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01", label_visibility="collapsed")
+    m_right[1, 0] = col1.number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10", label_visibility="collapsed")
+    m_right[1, 1] = col2.number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11", label_visibility="collapsed")
+    
+    # Convert the three matrices to the required local rule format
+    local_rule = matrices_to_local_rule(m_left, m_center, m_right)
     
     # Initial state selection
     st.sidebar.markdown('<h3 class="sidebar-header">Initial State</h3>', unsafe_allow_html=True)
@@ -125,6 +160,45 @@ def parse_matrix_row(row_str):
     except Exception as e:
         st.sidebar.error("Error parsing the row: " + str(e))
         return None
+
+def matrices_to_local_rule(m_left, m_center, m_right):
+    """
+    Convert three 2x2 matrices to the required 2x6 local rule format.
+    
+    Parameters:
+    -----------
+    m_left : np.ndarray
+        2x2 matrix for the left neighbor (M_{-1}).
+    m_center : np.ndarray
+        2x2 matrix for the center cell (M_{0}).
+    m_right : np.ndarray
+        2x2 matrix for the right neighbor (M_{1}).
+    
+    Returns:
+    --------
+    np.ndarray
+        2x6 local rule matrix in the required format.
+    """
+    # Initialize the 2x6 local rule matrix
+    local_rule = np.zeros((2, 6), dtype=int)
+    
+    # First row: [m_left[0,0], m_left[0,1], m_center[0,0], m_center[0,1], m_right[0,0], m_right[0,1]]
+    local_rule[0, 0] = m_left[0, 0]
+    local_rule[0, 1] = m_left[0, 1]
+    local_rule[0, 2] = m_center[0, 0]
+    local_rule[0, 3] = m_center[0, 1]
+    local_rule[0, 4] = m_right[0, 0]
+    local_rule[0, 5] = m_right[0, 1]
+    
+    # Second row: [m_left[1,0], m_left[1,1], m_center[1,0], m_center[1,1], m_right[1,0], m_right[1,1]]
+    local_rule[1, 0] = m_left[1, 0]
+    local_rule[1, 1] = m_left[1, 1]
+    local_rule[1, 2] = m_center[1, 0]
+    local_rule[1, 3] = m_center[1, 1]
+    local_rule[1, 4] = m_right[1, 0]
+    local_rule[1, 5] = m_right[1, 1]
+    
+    return local_rule
 
 def create_initial_state(init_option, n):
     """Create the initial state based on the selected option."""
