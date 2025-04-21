@@ -125,8 +125,8 @@ def setup_ui_elements():
     The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lattice over time.
     </div>
     """, unsafe_allow_html=True)
-    
-    # Sidebar for simulation parameters
+
+# Sidebar for simulation parameters
     st.sidebar.markdown("""
     <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">What am I seeing here?</a>
     """, unsafe_allow_html=True)
@@ -486,7 +486,7 @@ def display_results(n, plot_placeholder, current_hash):
     # Create a two-column layout for export options
     col1, col2 = st.columns(2)
     
-    # Resolution options dropdown in the first column
+    # Resolution options dropdown in the second column (no label)
     resolution_options = {
         "1920x1080 (baseline)": (1920, 1080),
         "2560x1440 (QHD)": (2560, 1440),
@@ -495,18 +495,19 @@ def display_results(n, plot_placeholder, current_hash):
         "1080x1920 (mobile/portrait)": (1080, 1920)
     }
     
-    selected_resolution = col1.selectbox(
-        "Resolution:",
-        options=list(resolution_options.keys()),
-        index=0,
-        key="resolution_selector"
-    )
-    
-    # Extract width and height from the selected resolution
-    width, height = resolution_options[selected_resolution]
-    
-    # Export button in the second column
-    if col2.button("📥 Export as Wallpaper", use_container_width=True, key="export_button"):
+    # Export button in the first column
+    if col1.button("📥 Export as Wallpaper", use_container_width=True, key="export_button"):
+        selected_resolution = col2.selectbox(
+            "",
+            options=list(resolution_options.keys()),
+            index=0,
+            key="resolution_selector",
+            label_visibility="collapsed"
+        )
+        
+        # Extract width and height from the selected resolution
+        width, height = resolution_options[selected_resolution]
+        
         with st.spinner(f"Generating {selected_resolution} image..."):
             try:
                 wallpaper_bytes = generate_hires_plot(st.session_state.pauli_strings, width, height)
@@ -528,6 +529,15 @@ def display_results(n, plot_placeholder, current_hash):
             except Exception as e:
                 st.error(f"Error generating high-resolution image: {str(e)}")
                 st.exception(e)  # Show detailed error information
+    else:
+        # Show resolution dropdown when button is not yet clicked
+        selected_resolution = col2.selectbox(
+            "",
+            options=list(resolution_options.keys()),
+            index=0,
+            key="resolution_selector",
+            label_visibility="collapsed"
+        )
 
 def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash):
     """Handle the initial load of the application."""
