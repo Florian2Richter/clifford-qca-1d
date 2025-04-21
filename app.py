@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.2 (Fixed Presets)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.3 (Fixed Custom Preset Values)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -194,10 +194,10 @@ def setup_ui_elements():
         m_center = presets[selected_preset]["matrices"]["m_center"].copy()
         m_right = presets[selected_preset]["matrices"]["m_right"].copy()
     else:
-        # Create empty matrices
-        m_left = np.zeros((2, 2), dtype=int)
-        m_center = np.zeros((2, 2), dtype=int)
-        m_right = np.zeros((2, 2), dtype=int)
+        # Use default matrices from Custom preset
+        m_left = presets["Custom"]["matrices"]["m_left"].copy()
+        m_center = presets["Custom"]["matrices"]["m_center"].copy()
+        m_right = presets["Custom"]["matrices"]["m_right"].copy()
     
     # Matrix headers
     st.sidebar.markdown("<div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>"
