@@ -68,8 +68,11 @@ def setup_ui_elements():
     <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">What am I seeing here?</a>
     """, unsafe_allow_html=True)
     st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
-    n = st.sidebar.number_input("Number of cells", min_value=3, value=500, step=1)
-    T_steps = st.sidebar.number_input("Number of time steps", min_value=1, value=250, step=1)
+    
+    # Create two columns for simulation parameters
+    col1, col2 = st.sidebar.columns(2)
+    n = col1.number_input("Number of cells", min_value=3, value=500, step=1)
+    T_steps = col2.number_input("Time steps", min_value=1, value=250, step=1)
     
     # Local rule matrix input
     st.sidebar.markdown('<h3 class="sidebar-header">Choose your Local Rule Matrices</h3>', unsafe_allow_html=True)
