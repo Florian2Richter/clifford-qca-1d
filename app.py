@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-21.3 (Fixed Custom Preset Values)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.4 (Fixed Glider Preset)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -162,7 +162,7 @@ def setup_ui_elements():
             },
             "initial_state": {
                 "num_operators": 2,
-                "operators": ["X", "Z"],
+                "operators": ["X", "X"],
                 "positions": [n//2, n//2 + 1]
             }
         }
