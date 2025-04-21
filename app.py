@@ -254,7 +254,7 @@ def setup_ui_elements():
     
     # Add version indicator at the bottom of the sidebar
     st.sidebar.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
-    st.sidebar.markdown("**App Version: 2025-04-21.8 (Multi-Resolution Export)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.9 (Sidebar Reorganization)**")
     
     return n, T_steps, local_rule, initial_state, plot_placeholder, status_placeholder
 
