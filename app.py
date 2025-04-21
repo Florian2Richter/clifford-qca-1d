@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.8 (Dropdown Matrix UI)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.9 (Custom Initial State UI)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -180,9 +180,24 @@ def setup_ui_elements():
     
     # Initial state selection
     st.sidebar.markdown('<h3 class="sidebar-header">Initial State</h3>', unsafe_allow_html=True)
-    init_option = st.sidebar.selectbox("Choose initial state:", ["Single active cell", "Random", "Manual"])
     
-    initial_state = create_initial_state(init_option, n)
+    # Number of non-identity operators
+    num_operators = st.sidebar.number_input("Number of non-identity operators", min_value=1, max_value=n, value=1, step=1)
+    
+    # Initialize operator list and positions
+    operators = []
+    positions = []
+    
+    # Generate UI for each operator
+    for i in range(int(num_operators)):
+        op_row = st.sidebar.columns(2)
+        operator = op_row[0].selectbox(f"Operator {i+1}", options=["X", "Y", "Z"], key=f"op_{i}")
+        position = op_row[1].number_input(f"Position {i+1}", min_value=0, max_value=n-1, value=(n//2 if i==0 else 0), key=f"pos_{i}")
+        operators.append(operator)
+        positions.append(position)
+    
+    # Create initial state based on operators and positions
+    initial_state = create_initial_state_custom(n, operators, positions)
     
     # Create placeholders for plot and status
     plot_placeholder = st.empty()
@@ -255,35 +270,39 @@ def matrices_to_local_rule(m_left, m_center, m_right):
     
     return local_rule
 
-def create_initial_state(init_option, n):
-    """Create the initial state based on the selected option."""
-    if init_option == "Single active cell":
-        initial_state = get_single_active_state(n)
-        st.sidebar.info("Using a single X operator at the center cell.")
-    elif init_option == "Random":
-        choices = ['I', 'X', 'Z', 'Y']
-        random_pauli = ''.join(np.random.choice(choices, size=n))
-        st.sidebar.info(f"Random initial state: {random_pauli}")
-        initial_state = pauli_string_to_state(random_pauli)
-    elif init_option == "Manual":
-        manual_pauli = st.sidebar.text_input("Pauli string (I, X, Z, Y)", "I"*(n//2) + "X" + "I"*(n - n//2 - 1))
-        if len(manual_pauli) != n:
-            st.sidebar.error("Pauli string must be of length equal to the number of cells.")
-            st.stop()
-        if any(ch not in set("IXZY") for ch in manual_pauli):
-            st.sidebar.error("Invalid characters in Pauli string. Use only I, X, Z, Y.")
-            st.stop()
-        initial_state = pauli_string_to_state(manual_pauli)
-    else:
-        initial_state = get_single_active_state(n)
+def create_initial_state_custom(n, operators, positions):
+    """
+    Create the initial state based on the selected operators and positions.
     
-    return initial_state
-
-def get_single_active_state(n):
-    """Create a state with a single X operator at the center."""
-    state = np.zeros(2 * n, dtype=int)
-    center = n // 2
-    state[2*center] = 1
+    Parameters:
+    -----------
+    n : int
+        Number of cells in the QCA.
+    operators : list of str
+        List of Pauli operators ('X', 'Y', 'Z') to place.
+    positions : list of int
+        Positions where to place the operators (modulo n for periodic boundaries).
+    
+    Returns:
+    --------
+    state : numpy.ndarray
+        The initial state vector.
+    """
+    # Create a Pauli string with all 'I' operators
+    pauli_string = ['I'] * n
+    
+    # Place selected operators at their positions (with modulo for periodic boundaries)
+    for op, pos in zip(operators, positions):
+        pos = pos % n  # Apply modulo for periodic boundaries
+        pauli_string[pos] = op
+    
+    # Convert Pauli string to a state vector
+    pauli_str = ''.join(pauli_string)
+    state = pauli_string_to_state(pauli_str)
+    
+    # Display the resulting Pauli string
+    st.sidebar.info(f"Initial state: {pauli_str}")
+    
     return state
 
 def get_params_hash(n, T_steps, local_rule, initial_state):
