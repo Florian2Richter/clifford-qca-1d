@@ -17,7 +17,49 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.9 (Custom Initial State UI)**")
+    st.sidebar.markdown("**App Version: 2025-04-21.0 (Added Presets)**")
+    
+    # Add presets dropdown at the top of the sidebar
+    st.sidebar.markdown('<h3 class="sidebar-header">Preset Configurations</h3>', unsafe_allow_html=True)
+    
+    # Define preset configurations
+    presets = {
+        "Custom": {
+            "description": "Custom configuration (current settings)",
+            "matrices": {
+                "m_left": np.array([[1, 0], [0, 1]]),
+                "m_center": np.array([[1, 1], [0, 1]]),
+                "m_right": np.array([[0, 1], [1, 0]])
+            },
+            "initial_state": {
+                "num_operators": 1,
+                "operators": ["X"],
+                "positions": [n//2]
+            }
+        },
+        "Glider": {
+            "description": "A 'glider' pattern that propagates through the lattice",
+            "matrices": {
+                "m_left": np.array([[0, 0], [0, 1]]),
+                "m_center": np.array([[0, 1], [1, 0]]),
+                "m_right": np.array([[0, 0], [0, 1]])
+            },
+            "initial_state": {
+                "num_operators": 2,
+                "operators": ["X", "Z"],
+                "positions": [n//2, n//2 + 1]
+            }
+        }
+    }
+    
+    # Select a preset
+    selected_preset = st.sidebar.selectbox(
+        "Choose a preset configuration:",
+        list(presets.keys())
+    )
+    
+    if selected_preset != "Custom":
+        st.sidebar.info(presets[selected_preset]["description"])
     
     # Custom CSS for better styling
     st.markdown("""
@@ -146,9 +188,16 @@ def setup_ui_elements():
     """, unsafe_allow_html=True)
     
     # Create matrices in a simple grid layout
-    m_left = np.zeros((2, 2), dtype=int)
-    m_center = np.zeros((2, 2), dtype=int)
-    m_right = np.zeros((2, 2), dtype=int)
+    if selected_preset != "Custom":
+        # Use matrices from preset
+        m_left = presets[selected_preset]["matrices"]["m_left"].copy()
+        m_center = presets[selected_preset]["matrices"]["m_center"].copy()
+        m_right = presets[selected_preset]["matrices"]["m_right"].copy()
+    else:
+        # Create empty matrices
+        m_left = np.zeros((2, 2), dtype=int)
+        m_center = np.zeros((2, 2), dtype=int)
+        m_right = np.zeros((2, 2), dtype=int)
     
     # Matrix headers
     st.sidebar.markdown("<div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>"
@@ -159,21 +208,21 @@ def setup_ui_elements():
     
     # First row of matrices - use 6 columns side by side
     row1 = st.sidebar.columns(6)
-    m_left[0, 0] = row1[0].selectbox("", options=[0, 1], index=1, key="m_left_00", label_visibility="collapsed")
-    m_left[0, 1] = row1[1].selectbox("", options=[0, 1], index=0, key="m_left_01", label_visibility="collapsed")
-    m_center[0, 0] = row1[2].selectbox("", options=[0, 1], index=1, key="m_center_00", label_visibility="collapsed")
-    m_center[0, 1] = row1[3].selectbox("", options=[0, 1], index=1, key="m_center_01", label_visibility="collapsed")
-    m_right[0, 0] = row1[4].selectbox("", options=[0, 1], index=0, key="m_right_00", label_visibility="collapsed")
-    m_right[0, 1] = row1[5].selectbox("", options=[0, 1], index=1, key="m_right_01", label_visibility="collapsed")
+    m_left[0, 0] = row1[0].selectbox("", options=[0, 1], index=int(m_left[0, 0]), key="m_left_00", label_visibility="collapsed")
+    m_left[0, 1] = row1[1].selectbox("", options=[0, 1], index=int(m_left[0, 1]), key="m_left_01", label_visibility="collapsed")
+    m_center[0, 0] = row1[2].selectbox("", options=[0, 1], index=int(m_center[0, 0]), key="m_center_00", label_visibility="collapsed")
+    m_center[0, 1] = row1[3].selectbox("", options=[0, 1], index=int(m_center[0, 1]), key="m_center_01", label_visibility="collapsed")
+    m_right[0, 0] = row1[4].selectbox("", options=[0, 1], index=int(m_right[0, 0]), key="m_right_00", label_visibility="collapsed")
+    m_right[0, 1] = row1[5].selectbox("", options=[0, 1], index=int(m_right[0, 1]), key="m_right_01", label_visibility="collapsed")
     
     # Second row of matrices - use 6 columns side by side
     row2 = st.sidebar.columns(6)
-    m_left[1, 0] = row2[0].selectbox("", options=[0, 1], index=0, key="m_left_10", label_visibility="collapsed")
-    m_left[1, 1] = row2[1].selectbox("", options=[0, 1], index=1, key="m_left_11", label_visibility="collapsed")
-    m_center[1, 0] = row2[2].selectbox("", options=[0, 1], index=0, key="m_center_10", label_visibility="collapsed")
-    m_center[1, 1] = row2[3].selectbox("", options=[0, 1], index=1, key="m_center_11", label_visibility="collapsed")
-    m_right[1, 0] = row2[4].selectbox("", options=[0, 1], index=1, key="m_right_10", label_visibility="collapsed")
-    m_right[1, 1] = row2[5].selectbox("", options=[0, 1], index=0, key="m_right_11", label_visibility="collapsed")
+    m_left[1, 0] = row2[0].selectbox("", options=[0, 1], index=int(m_left[1, 0]), key="m_left_10", label_visibility="collapsed")
+    m_left[1, 1] = row2[1].selectbox("", options=[0, 1], index=int(m_left[1, 1]), key="m_left_11", label_visibility="collapsed")
+    m_center[1, 0] = row2[2].selectbox("", options=[0, 1], index=int(m_center[1, 0]), key="m_center_10", label_visibility="collapsed")
+    m_center[1, 1] = row2[3].selectbox("", options=[0, 1], index=int(m_center[1, 1]), key="m_center_11", label_visibility="collapsed")
+    m_right[1, 0] = row2[4].selectbox("", options=[0, 1], index=int(m_right[1, 0]), key="m_right_10", label_visibility="collapsed")
+    m_right[1, 1] = row2[5].selectbox("", options=[0, 1], index=int(m_right[1, 1]), key="m_right_11", label_visibility="collapsed")
     
     # Convert the three matrices to the required local rule format
     local_rule = matrices_to_local_rule(m_left, m_center, m_right)
@@ -182,7 +231,15 @@ def setup_ui_elements():
     st.sidebar.markdown('<h3 class="sidebar-header">Initial State</h3>', unsafe_allow_html=True)
     
     # Number of non-identity operators
-    num_operators = st.sidebar.number_input("Number of non-identity operators", min_value=1, max_value=n, value=1, step=1)
+    if selected_preset != "Custom":
+        preset_num_operators = presets[selected_preset]["initial_state"]["num_operators"]
+        preset_operators = presets[selected_preset]["initial_state"]["operators"]
+        preset_positions = presets[selected_preset]["initial_state"]["positions"]
+        num_operators = st.sidebar.number_input("Number of non-identity operators", 
+                                              min_value=1, max_value=n, value=preset_num_operators, step=1)
+    else:
+        num_operators = st.sidebar.number_input("Number of non-identity operators", 
+                                              min_value=1, max_value=n, value=1, step=1)
     
     # Initialize operator list and positions
     operators = []
@@ -191,8 +248,24 @@ def setup_ui_elements():
     # Generate UI for each operator
     for i in range(int(num_operators)):
         op_row = st.sidebar.columns(2)
-        operator = op_row[0].selectbox(f"Operator {i+1}", options=["X", "Y", "Z"], key=f"op_{i}")
-        position = op_row[1].number_input(f"Position {i+1}", min_value=0, max_value=n-1, value=(n//2 if i==0 else 0), key=f"pos_{i}")
+        
+        # Set default values from preset if applicable
+        if selected_preset != "Custom" and i < len(preset_operators):
+            default_op = preset_operators[i]
+            default_pos = preset_positions[i]
+        else:
+            default_op = "X"
+            default_pos = n//2 if i == 0 else 0
+        
+        # Create operator and position inputs
+        operator = op_row[0].selectbox(f"Operator {i+1}", 
+                                      options=["X", "Y", "Z"], 
+                                      index=["X", "Y", "Z"].index(default_op), 
+                                      key=f"op_{i}")
+        position = op_row[1].number_input(f"Position {i+1}", 
+                                        min_value=0, max_value=n-1, 
+                                        value=default_pos, 
+                                        key=f"pos_{i}")
         operators.append(operator)
         positions.append(position)
     
