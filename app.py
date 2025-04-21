@@ -429,16 +429,11 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
                 theme=None
             )
         
-        progress_bar = st.progress(0)
         for step in range(st.session_state.current_step, st.session_state.target_steps):
             next_state, next_pauli = calculate_step(st.session_state.states[-1])
             st.session_state.states.append(next_state.copy())
             st.session_state.pauli_strings.append(next_pauli)
             st.session_state.current_step += 1
-            
-            # Update progress bar
-            progress = st.session_state.current_step / st.session_state.target_steps
-            progress_bar.progress(progress)
 
             if (st.session_state.current_step % BATCH_SIZE == 0 or 
                     st.session_state.current_step == st.session_state.target_steps):
@@ -485,35 +480,54 @@ def display_results(n, plot_placeholder, current_hash):
         theme=None
     )
     
-    # Add export section with a clear success message and divider
+    # Add export section with a success message
     st.success("✅ Simulation complete!")
-    st.markdown("---")
     
-    # Create a visually distinct export section
-    st.markdown("### 🖼️ Export Options")
+    # Create a two-column layout for export options
+    col1, col2 = st.columns(2)
     
-    # Add high-resolution download button in a centered layout
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("📥 Export as FullHD Wallpaper (1920×1080)", use_container_width=True, key="export_button"):
-            with st.spinner("Generating high-resolution image..."):
-                try:
-                    wallpaper_bytes = generate_hires_plot(st.session_state.pauli_strings)
-                    if wallpaper_bytes:
-                        # Create a download button with the generated image
-                        st.download_button(
-                            label="Download FullHD Wallpaper",
-                            data=wallpaper_bytes,
-                            file_name=f"qca_wallpaper_{current_hash[:6]}.png",
-                            mime="image/png",
-                            use_container_width=True
-                        )
-                        st.success("Image generated! Click the button above to download.")
-                    else:
-                        st.error("Could not generate image. Please try again.")
-                except Exception as e:
-                    st.error(f"Error generating high-resolution image: {str(e)}")
-                    st.exception(e)  # Show detailed error information
+    # Resolution options dropdown in the first column
+    resolution_options = {
+        "1920x1080 (baseline)": (1920, 1080),
+        "2560x1440 (QHD)": (2560, 1440),
+        "3840x2160 (4K)": (3840, 2160),
+        "3440x1440 (ultrawide)": (3440, 1440),
+        "1080x1920 (mobile/portrait)": (1080, 1920)
+    }
+    
+    selected_resolution = col1.selectbox(
+        "Resolution:",
+        options=list(resolution_options.keys()),
+        index=0,
+        key="resolution_selector"
+    )
+    
+    # Extract width and height from the selected resolution
+    width, height = resolution_options[selected_resolution]
+    
+    # Export button in the second column
+    if col2.button("📥 Export as Wallpaper", use_container_width=True, key="export_button"):
+        with st.spinner(f"Generating {selected_resolution} image..."):
+            try:
+                wallpaper_bytes = generate_hires_plot(st.session_state.pauli_strings, width, height)
+                if wallpaper_bytes:
+                    # Parse the resolution for the filename
+                    resolution_label = selected_resolution.split(" ")[0]
+                    
+                    # Create a download button with the generated image
+                    st.download_button(
+                        label=f"Download {resolution_label} Wallpaper",
+                        data=wallpaper_bytes,
+                        file_name=f"qca_wallpaper_{resolution_label}_{current_hash[:6]}.png",
+                        mime="image/png",
+                        use_container_width=True
+                    )
+                    st.success("Image generated! Click the button above to download.")
+                else:
+                    st.error("Could not generate image. Please try again.")
+            except Exception as e:
+                st.error(f"Error generating high-resolution image: {str(e)}")
+                st.exception(e)  # Show detailed error information
 
 def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash):
     """Handle the initial load of the application."""
@@ -547,7 +561,7 @@ def build_cached_global_operator(n, local_rule):
 
 def generate_hires_plot(pauli_strings, width=1920, height=1080):
     """
-    Generate a high-resolution (FullHD) plot of the QCA simulation for wallpaper use.
+    Generate a high-resolution plot of the QCA simulation for wallpaper use.
     
     Parameters:
     -----------
@@ -588,25 +602,42 @@ def generate_hires_plot(pauli_strings, width=1920, height=1080):
         zmin=0,
         zmax=3,
         showscale=False,  # No colorbar for clean wallpaper
-        hoverinfo='none'  # No hover for static image
+        hoverinfo='none',  # No hover for static image
     ))
     
-    # Set clean layout with no axes or labels
+    # Set completely clean layout with absolute zero margins
     fig.update_layout(
         width=width,
         height=height,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=0, r=0, t=0, b=0, pad=0),
-        yaxis=dict(
-            scaleanchor="x",
-            scaleratio=1,
-            visible=False
-        ),
-        xaxis=dict(visible=False)
+        autosize=False,
     )
     
-    # Convert to PNG bytes
+    # Eliminate all axes, ticks, and constraints
+    fig.update_xaxes(
+        visible=False,
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False,
+        constrain="domain",
+        range=[0, cell_count],
+        fixedrange=True
+    )
+    
+    fig.update_yaxes(
+        visible=False,
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False,
+        scaleanchor=None,  # Remove scale anchoring
+        constrain="domain",
+        range=[0, time_steps],
+        fixedrange=True
+    )
+    
+    # Convert to PNG bytes with exact dimensions
     img_bytes = fig.to_image(format="png", width=width, height=height, scale=1)
     
     return img_bytes
