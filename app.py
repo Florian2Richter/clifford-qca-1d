@@ -90,14 +90,6 @@ def setup_ui_elements():
     Have fun exploring — whatever your angle!
     """, unsafe_allow_html=True)
     
-    # Simulation parameters section
-    st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
-    
-    # Create two columns for simulation parameters
-    col1, col2 = st.sidebar.columns(2)
-    n = col1.number_input("Number of cells", min_value=3, value=500, step=1)
-    T_steps = col2.number_input("Time steps", min_value=1, value=250, step=1)
-    
     # Add presets dropdown at the top of the sidebar
     st.sidebar.markdown('<h3 class="sidebar-header">Preset Configurations</h3>', unsafe_allow_html=True)
     
@@ -113,7 +105,7 @@ def setup_ui_elements():
             "initial_state": {
                 "num_operators": 1,
                 "operators": ["X"],
-                "positions": [n//2]
+                "positions": [250]
             }
         },
         "Glider": {
@@ -126,7 +118,7 @@ def setup_ui_elements():
             "initial_state": {
                 "num_operators": 2,
                 "operators": ["X", "Z"],
-                "positions": [n//2, n//2 + 1]
+                "positions": [250, 251]
             }
         },
         "Fractal": {
@@ -212,10 +204,10 @@ def setup_ui_elements():
         preset_operators = presets[selected_preset]["initial_state"]["operators"]
         preset_positions = presets[selected_preset]["initial_state"]["positions"]
         num_operators = st.sidebar.number_input("Number of non-identity operators", 
-                                              min_value=1, max_value=n, value=preset_num_operators, step=1)
+                                              min_value=1, max_value=500, value=preset_num_operators, step=1)
     else:
         num_operators = st.sidebar.number_input("Number of non-identity operators", 
-                                              min_value=1, max_value=n, value=1, step=1)
+                                              min_value=1, max_value=500, value=1, step=1)
     
     # Initialize operator list and positions
     operators = []
@@ -231,7 +223,7 @@ def setup_ui_elements():
             default_pos = preset_positions[i]
         else:
             default_op = "X"
-            default_pos = n//2 if i == 0 else 0
+            default_pos = 250 if i == 0 else 0
         
         # Create operator and position inputs
         operator = op_row[0].selectbox(f"Operator {i+1}", 
@@ -239,11 +231,19 @@ def setup_ui_elements():
                                       index=["X", "Y", "Z"].index(default_op), 
                                       key=f"op_{i}")
         position = op_row[1].number_input(f"Position {i+1}", 
-                                        min_value=0, max_value=n-1, 
+                                        min_value=0, max_value=499, 
                                         value=default_pos, 
                                         key=f"pos_{i}")
         operators.append(operator)
         positions.append(position)
+    
+    # Simulation parameters section (moved to be the last configurable section)
+    st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
+    
+    # Create two columns for simulation parameters
+    col1, col2 = st.sidebar.columns(2)
+    n = col1.number_input("Number of cells", min_value=3, value=500, step=1)
+    T_steps = col2.number_input("Time steps", min_value=1, value=250, step=1)
     
     # Create initial state based on operators and positions
     initial_state = create_initial_state_custom(n, operators, positions)
