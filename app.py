@@ -17,7 +17,7 @@ def setup_page_config():
     )
     
     # Add version indicator to verify deployment
-    st.sidebar.markdown("**App Version: 2025-04-20.7 (Fixed Matrix UI)**")
+    st.sidebar.markdown("**App Version: 2025-04-20.8 (Dropdown Matrix UI)**")
     
     # Custom CSS for better styling
     st.markdown("""
@@ -65,6 +65,13 @@ def setup_page_config():
             background-color: rgba(255, 230, 200, 0.3);
             border-radius: 5px;
             padding: 5px;
+        }
+        
+        /* Enhance dropdown appearance */
+        [data-testid="stSelectbox"] > div > div > div {
+            font-weight: bold !important;
+            text-align: center !important;
+            font-size: 16px !important;
         }
         
         /* Better number input styling */
@@ -152,21 +159,21 @@ def setup_ui_elements():
     
     # First row of matrices - use 6 columns side by side
     row1 = st.sidebar.columns(6)
-    m_left[0, 0] = row1[0].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_00")
-    m_left[0, 1] = row1[1].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_01")
-    m_center[0, 0] = row1[2].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_00")
-    m_center[0, 1] = row1[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_01")
-    m_right[0, 0] = row1[4].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_00")
-    m_right[0, 1] = row1[5].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_01")
+    m_left[0, 0] = row1[0].selectbox("", options=[0, 1], index=1, key="m_left_00", label_visibility="collapsed")
+    m_left[0, 1] = row1[1].selectbox("", options=[0, 1], index=0, key="m_left_01", label_visibility="collapsed")
+    m_center[0, 0] = row1[2].selectbox("", options=[0, 1], index=1, key="m_center_00", label_visibility="collapsed")
+    m_center[0, 1] = row1[3].selectbox("", options=[0, 1], index=1, key="m_center_01", label_visibility="collapsed")
+    m_right[0, 0] = row1[4].selectbox("", options=[0, 1], index=0, key="m_right_00", label_visibility="collapsed")
+    m_right[0, 1] = row1[5].selectbox("", options=[0, 1], index=1, key="m_right_01", label_visibility="collapsed")
     
     # Second row of matrices - use 6 columns side by side
     row2 = st.sidebar.columns(6)
-    m_left[1, 0] = row2[0].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_left_10")
-    m_left[1, 1] = row2[1].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_left_11")
-    m_center[1, 0] = row2[2].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_center_10")
-    m_center[1, 1] = row2[3].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_center_11")
-    m_right[1, 0] = row2[4].number_input("", min_value=0, max_value=1, value=1, step=1, key="m_right_10")
-    m_right[1, 1] = row2[5].number_input("", min_value=0, max_value=1, value=0, step=1, key="m_right_11")
+    m_left[1, 0] = row2[0].selectbox("", options=[0, 1], index=0, key="m_left_10", label_visibility="collapsed")
+    m_left[1, 1] = row2[1].selectbox("", options=[0, 1], index=1, key="m_left_11", label_visibility="collapsed")
+    m_center[1, 0] = row2[2].selectbox("", options=[0, 1], index=0, key="m_center_10", label_visibility="collapsed")
+    m_center[1, 1] = row2[3].selectbox("", options=[0, 1], index=1, key="m_center_11", label_visibility="collapsed")
+    m_right[1, 0] = row2[4].selectbox("", options=[0, 1], index=1, key="m_right_10", label_visibility="collapsed")
+    m_right[1, 1] = row2[5].selectbox("", options=[0, 1], index=0, key="m_right_11", label_visibility="collapsed")
     
     # Convert the three matrices to the required local rule format
     local_rule = matrices_to_local_rule(m_left, m_center, m_right)
