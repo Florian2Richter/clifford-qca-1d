@@ -5,6 +5,7 @@ from qca.visualization import make_empty_figure, update_figure, pauli_strings_to
 from ui.page_config import setup_page_config
 from ui.sidebar import setup_sidebar
 from ui.main_view import setup_main_view, run_simulation, display_results, handle_initial_load
+from simulation.core import calculate_step, build_cached_global_operator
 import hashlib
 import io
 import plotly.graph_objects as go
@@ -157,12 +158,6 @@ def handle_parameter_changes(n, T_steps, local_rule, initial_state, current_hash
         st.session_state.initialized = True
         st.session_state.fig = None
 
-def calculate_step(current_state):
-    """Calculate the next state for the QCA simulation."""
-    next_state = mod2_matmul(st.session_state.global_operator, current_state) % 2
-    next_pauli = vector_to_pauli_string(next_state)
-    return next_state, next_pauli
-
 def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
     """Run the progressive simulation."""
     if st.session_state.current_step < st.session_state.target_steps:
@@ -310,11 +305,6 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
     st.session_state.params_hash = current_hash
     st.session_state.simulation_running = True
     st.session_state.initialized = True
-
-@st.cache_data(ttl=900, show_spinner=False)
-def build_cached_global_operator(n, local_rule):
-    """Cached version of build_global_operator."""
-    return build_global_operator(n, local_rule)
 
 def main():
     """Main function to run the application."""

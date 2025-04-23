@@ -1,6 +1,7 @@
 import streamlit as st
 from qca.visualization import make_empty_figure, update_figure, generate_hires_plot
 from qca.core import vector_to_pauli_string
+from simulation.core import calculate_step
 
 def setup_main_view():
     """
@@ -47,13 +48,9 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
     status_placeholder.info(f"Running simulation: step {st.session_state.current_step}/{st.session_state.target_steps}")
     
     # Calculate the next step using our global operator
-    from app import calculate_step
-    next_state = calculate_step(
+    next_state, next_pauli = calculate_step(
         st.session_state.states[-1]
     )
-    
-    # Convert to Pauli string representation
-    next_pauli = vector_to_pauli_string(next_state)
     
     # Store the results
     st.session_state.states.append(next_state)
