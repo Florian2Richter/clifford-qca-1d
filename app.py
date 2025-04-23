@@ -2,51 +2,13 @@ import streamlit as st
 import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
 from qca.visualization import make_empty_figure, update_figure, pauli_strings_to_numeric
+from ui.page_config import setup_page_config
 import hashlib
 import io
 import plotly.graph_objects as go
 
 # Global constants
 BATCH_SIZE = 5
-
-def setup_page_config():
-    """Configure the Streamlit page settings."""
-    st.set_page_config(
-        page_title="1D Clifford QCA Simulator",
-        page_icon="🔬",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-    
-    # Custom CSS for better styling
-    st.markdown("""
-    <style>
-    .main-header {
-        color: #4B0082;
-        font-size: 2.5rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-    .description {
-        color: #555;
-        font-size: 1.0rem;
-        margin-bottom: 2rem;
-    }
-    .sidebar-header {
-        color: #4B0082;
-        font-weight: 600;
-        margin-top: 1rem;
-    }
-    div[data-testid="stSidebar"] {
-        background-color: #f8f9fa;
-        border-right: 1px solid #eee;
-        padding: 1rem;
-    }
-    .stAlert {
-        padding: 0.75rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
 def initialize_session_state():
     """Initialize the session state if it doesn't exist."""

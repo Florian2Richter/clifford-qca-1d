@@ -1,0 +1,1 @@
+# UI components for the 1D Clifford QCA Simulator 
