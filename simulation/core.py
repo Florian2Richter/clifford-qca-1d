@@ -165,6 +165,34 @@ def matrices_to_local_rule(m_left, m_center, m_right):
     
     return local_rule
 
+def parse_local_rule(row1_input, row2_input):
+    """
+    Parse input rows into an array for the local rule.
+    
+    Parameters:
+    -----------
+    row1_input, row2_input : str
+        Comma-separated 0s and 1s
+        
+    Returns:
+    --------
+    numpy.ndarray
+        A 2x6 array representing the local rule
+    """
+    from ui.utils import parse_matrix_row
+    
+    row1 = parse_matrix_row(row1_input)
+    row2 = parse_matrix_row(row2_input)
+    
+    # Ensure correct length
+    if row1 and row2:  # Only proceed if both rows are valid
+        row1 = row1[:6] + [0] * max(0, 6 - len(row1))
+        row2 = row2[:6] + [0] * max(0, 6 - len(row2))
+        
+        return np.array([row1, row2])
+    
+    return None
+
 def create_initial_state_custom(n, operators, positions):
     """
     Create the initial state based on the selected operators and positions.

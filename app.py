@@ -10,7 +10,8 @@ from simulation.core import (
     matrices_to_local_rule,
     create_initial_state_custom,
     get_params_hash,
-    handle_parameter_changes
+    handle_parameter_changes,
+    parse_local_rule
 )
 from visualization import make_empty_figure, update_figure, pauli_strings_to_numeric, generate_hires_plot
 from ui.page_config import setup_page_config
@@ -35,57 +36,6 @@ def initialize_session_state():
             "simulation_complete": False,
             "fig": None
         })
-
-def parse_local_rule(row1_input, row2_input):
-    """
-    Parse input rows into an array for the local rule.
-    
-    Parameters:
-    -----------
-    row1_input, row2_input : str
-        Comma-separated 0s and 1s
-        
-    Returns:
-    --------
-    numpy.ndarray
-        A 2x6 array representing the local rule
-    """
-    row1 = parse_matrix_row(row1_input)
-    row2 = parse_matrix_row(row2_input)
-    
-    # Ensure correct length
-    row1 = row1[:6] + [0] * max(0, 6 - len(row1))
-    row2 = row2[:6] + [0] * max(0, 6 - len(row2))
-    
-    return np.array([row1, row2])
-
-def parse_matrix_row(row_str):
-    """
-    Parse a comma-separated string of 0s and 1s into a list of integers.
-    
-    Parameters:
-    -----------
-    row_str : str
-        Comma-separated string of 0s and 1s.
-    
-    Returns:
-    --------
-    list
-        List of integers (0s and 1s).
-    """
-    try:
-        # Remove spaces and split by commas
-        values = [int(x.strip()) for x in row_str.replace(' ', '').split(',')]
-        
-        # Validate that all values are 0 or 1
-        for val in values:
-            if val not in [0, 1]:
-                st.sidebar.error("Only 0 and 1 are allowed.")
-                return None
-        return values
-    except Exception as e:
-        st.sidebar.error("Error parsing the row: " + str(e))
-        return None
 
 def main():
     """Main function to run the application."""

@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 from ui.page_config import display_app_version
+from simulation.core import matrices_to_local_rule, create_initial_state_custom
 
 def setup_sidebar():
     """
@@ -22,7 +23,6 @@ def setup_sidebar():
     m_left, m_center, m_right = display_matrix_input_section(presets, selected_preset)
     
     # Convert the matrices to the required local rule format
-    from app import matrices_to_local_rule
     local_rule = matrices_to_local_rule(m_left, m_center, m_right)
     
     # Initial state section
@@ -32,7 +32,6 @@ def setup_sidebar():
     n, T_steps = display_simulation_parameters()
     
     # Create initial state based on operators and positions
-    from app import create_initial_state_custom
     initial_state = create_initial_state_custom(n, operators, positions)
     
     # Add version indicator at the bottom of the sidebar
