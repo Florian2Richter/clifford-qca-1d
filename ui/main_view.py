@@ -45,38 +45,38 @@ def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
         # Create the figure once on first batch
         if st.session_state.fig is None:
             st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
-            plot_placeholder.plotly_chart(
-                st.session_state.fig,
-                use_container_width=False,
-                config=getattr(st.session_state.fig, '_config', None),
-                key=f"init_plot_{current_hash[:8]}",
-                theme=None
-            )
         
+        # Show a progress bar
+        progress_bar = st.progress(0)
+        
+        # Run all steps without updating the display
         for step in range(st.session_state.current_step, st.session_state.target_steps):
             next_state, next_pauli = calculate_step(st.session_state.states[-1])
             st.session_state.states.append(next_state.copy())
             st.session_state.pauli_strings.append(next_pauli)
             st.session_state.current_step += 1
-
-            if (st.session_state.current_step % BATCH_SIZE == 0 or 
-                    st.session_state.current_step == st.session_state.target_steps):
-                # Update the figure
-                st.session_state.fig = update_figure(st.session_state.fig, st.session_state.pauli_strings)
-                plot_placeholder.plotly_chart(
-                    st.session_state.fig,
-                    use_container_width=False,
-                    config=getattr(st.session_state.fig, '_config', None),
-                    key=f"step_{st.session_state.current_step}_{current_hash[:8]}",
-                    theme=None
-                )
+            
+            # Update progress bar
+            progress = st.session_state.current_step / st.session_state.target_steps
+            progress_bar.progress(progress)
+        
+        # Update the figure once at the end
+        st.session_state.fig = update_figure(st.session_state.fig, st.session_state.pauli_strings)
+        plot_placeholder.plotly_chart(
+            st.session_state.fig,
+            use_container_width=False,
+            config=getattr(st.session_state.fig, '_config', None),
+            key=f"final_run_{current_hash[:8]}",
+            theme=None
+        )
         
         # Always set these flags at the end of simulation
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         
-        # Clear the status placeholder before adding success message
+        # Clear the status placeholder and progress bar
         status_placeholder.empty()
+        progress_bar.empty()
         
         # Force a rerun to ensure display_results is shown
         st.rerun()
