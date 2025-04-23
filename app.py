@@ -528,10 +528,9 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
     st.session_state.simulation_running = True
     st.session_state.initialized = True
 
-# Add a decorator for caching
 @st.cache_data(ttl=900, show_spinner=False)
 def build_cached_global_operator(n, local_rule):
-    """Cached version of build_global_operator to improve performance."""
+    """Cached version of build_global_operator."""
     return build_global_operator(n, local_rule)
 
 def generate_hires_plot(pauli_strings, width=1920, height=1080):
@@ -570,7 +569,7 @@ def generate_hires_plot(pauli_strings, width=1920, height=1080):
         [1.0, '#4A4A4A']     # Y (value 3)
     ]
     
-    # Create the heatmap with optimized appearance for wallpaper
+    # Create the heatmap for wallpaper
     fig = go.Figure(data=go.Heatmap(
         z=numeric_data,
         colorscale=color_mapping,
@@ -628,7 +627,7 @@ def main():
     # Setup UI elements
     n, T_steps, local_rule, initial_state, plot_placeholder, status_placeholder = setup_ui_elements()
     
-    # Build the global operator (use cached version for better performance)
+    # Build the global operator (use cached version)
     global_operator = build_cached_global_operator(n, local_rule)
     
     # Calculate parameters hash

@@ -1,7 +1,7 @@
 import numpy as np
 import plotly.graph_objects as go
 
-# Global constants for better performance
+# Global constants
 PAULI_MAPPING = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
 
 def pauli_strings_to_numeric(pauli_strings):
@@ -59,7 +59,7 @@ def make_empty_figure(cell_count, total_time_steps):
         [1.0, '#4A4A4A']     # Y (value 3)
     ]
     
-    # Create the heatmap with optimized performance settings
+    # Create the heatmap
     fig = go.Figure(data=go.Heatmap(
         z=data,
         x=list(range(cell_count)),
@@ -87,7 +87,7 @@ def make_empty_figure(cell_count, total_time_steps):
         customdata=customdata
     ))
     
-    # Set layout with performance optimizations
+    # Set layout
     fig.update_layout(
         title='1D Clifford QCA Spacetime Diagram',
         xaxis_title='Cell Position',
@@ -108,25 +108,25 @@ def make_empty_figure(cell_count, total_time_steps):
         autosize=False,
         # Enable interactive features
         uirevision=True,  # Maintain UI state during updates
-        hovermode='closest',    # Simplify hover behavior
-        hoverdistance=10,       # Limit hover distance detection
-        dragmode='zoom',        # Enable zoom selection
+        hovermode='closest',
+        hoverdistance=10,
+        dragmode='zoom',
         modebar=dict(
             orientation='v',
             bgcolor='rgba(0,0,0,0)'
         ),
         margin=dict(l=60, r=30, t=50, b=50),
-        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
-        plot_bgcolor='rgba(0,0,0,0)'    # Transparent plot area
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     # Configure interactivity
     config = {
         'displayModeBar': True,
-        'scrollZoom': True,     # Enable scroll wheel zooming
+        'scrollZoom': True,
         'displaylogo': False,
         'responsive': True,
-        'staticPlot': False,    # Allow interactivity
+        'staticPlot': False,
         'toImageButtonOptions': {
             'format': 'png',
             'filename': 'qca_simulation',
@@ -135,13 +135,13 @@ def make_empty_figure(cell_count, total_time_steps):
             'scale': 1
         },
         'modeBarButtonsToRemove': [
-            'select2d', 'lasso2d',  # Keep zoom buttons
+            'select2d', 'lasso2d',
             'hoverClosestCartesian', 'hoverCompareCartesian',
             'toggleSpikelines', 'toggleHover', 'resetViewMapbox'
         ]
     }
     
-    # Simplify axes
+    # Configure axes
     fig.update_xaxes(showgrid=False, zeroline=False, showspikes=False)
     fig.update_yaxes(showgrid=False, zeroline=False, showspikes=False)
     
@@ -175,7 +175,7 @@ def update_figure(fig, pauli_strings):
     
     # Convert strings to numeric data
     if current_time_steps > 0:
-        # Convert strings to numeric data using our mapping (I->0, X->1, Z->2, Y->3)
+        # Convert strings to numeric data
         numeric_data = pauli_strings_to_numeric(pauli_strings)
         
         # Prepare the full data array
@@ -191,7 +191,7 @@ def update_figure(fig, pauli_strings):
         if t < total_time_steps:
             customdata[t] = list(s)
     
-    # Update the figure with the integer values and customdata
+    # Update the figure
     fig.plotly_restyle(
         {'z': [z_data], 'customdata': [customdata]},
         trace_indexes=[0]
