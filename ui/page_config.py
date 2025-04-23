@@ -1,8 +1,8 @@
 import streamlit as st
 
 # Current app version
-APP_VERSION = "2025-04-23.1"
-APP_VERSION_LABEL = "Refactored UI"
+APP_VERSION = "2025-04-23.2"
+APP_VERSION_LABEL = "Refactored Code"
 
 def setup_page_config():
     """Configure the Streamlit page settings."""
