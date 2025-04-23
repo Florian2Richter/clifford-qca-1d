@@ -1,8 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
-
-# Global constants
-PAULI_MAPPING = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
+from config import PAULI_MAPPING, COLOR_MAPPING, DEFAULT_FIG_WIDTH, DEFAULT_FIG_HEIGHT, EXPORT_RESOLUTIONS
 
 def pauli_strings_to_numeric(pauli_strings):
     """
@@ -52,19 +50,14 @@ def make_empty_figure(cell_count, total_time_steps):
     customdata = [['I'] * cell_count for _ in range(total_time_steps)]
     
     # Define colors for each Pauli operator with normalized values (0 to 1)
-    color_mapping = [
-        [0.0, 'white'],      # I (value 0)
-        [0.33, '#008080'],   # X (value 1)
-        [0.67, '#FF7F50'],   # Z (value 2)
-        [1.0, '#4A4A4A']     # Y (value 3)
-    ]
+    # Now using COLOR_MAPPING from config.py
     
     # Create the heatmap
     fig = go.Figure(data=go.Heatmap(
         z=data,
         x=list(range(cell_count)),
         y=list(range(total_time_steps)),
-        colorscale=color_mapping,
+        colorscale=COLOR_MAPPING,
         zmin=0,
         zmax=3,
         showscale=True,
@@ -103,8 +96,8 @@ def make_empty_figure(cell_count, total_time_steps):
             dtick=max(1, total_time_steps // 10),  # Fewer ticks
             constrain='domain'
         ),
-        width=800,
-        height=500,
+        width=DEFAULT_FIG_WIDTH,
+        height=DEFAULT_FIG_HEIGHT,
         autosize=False,
         # Enable interactive features
         uirevision=True,  # Maintain UI state during updates
@@ -201,83 +194,80 @@ def update_figure(fig, pauli_strings):
 
 def generate_hires_plot(pauli_strings, width=1920, height=1080):
     """
-    Generate a high-resolution plot of the QCA simulation for wallpaper use.
+    Generate a high-resolution plot for wallpaper export.
     
     Parameters:
     -----------
-    pauli_strings : list of str
-        List of Pauli strings representing the state at each calculated time step.
+    pauli_strings : list of strings
+        List of Pauli strings representing the state at each time step.
     width : int
-        Width of the output image in pixels (default: 1920 for FullHD).
+        Width of the image in pixels.
     height : int
-        Height of the output image in pixels (default: 1080 for FullHD).
+        Height of the image in pixels.
         
     Returns:
     --------
     bytes
-        The PNG image as bytes for download.
+        PNG image as bytes.
     """
-    # Get dimensions
-    time_steps = len(pauli_strings)
-    cell_count = len(pauli_strings[0]) if pauli_strings else 0
-    
-    if time_steps == 0 or cell_count == 0:
+    try:
+        import io
+        from plotly.io import to_image
+        
+        # Get dimensions from the input
+        time_steps = len(pauli_strings)
+        if time_steps == 0:
+            return None
+        cell_count = len(pauli_strings[0])
+        
+        # Convert Pauli strings to numeric representation
+        numeric_data = pauli_strings_to_numeric(pauli_strings)
+        
+        # Create a new figure for high-resolution export
+        fig = go.Figure(data=go.Heatmap(
+            z=numeric_data,
+            x=list(range(cell_count)),
+            y=list(range(time_steps)), 
+            colorscale=COLOR_MAPPING,
+            zmin=0,
+            zmax=3,
+            showscale=True,
+            colorbar=dict(
+                title='Pauli Operator',
+                tickvals=[0, 1, 2, 3],
+                ticktext=['I', 'X', 'Z', 'Y'],
+                thickness=25,
+                outlinewidth=1,
+                outlinecolor='black'
+            )
+        ))
+        
+        # Configure layout for high resolution
+        fig.update_layout(
+            title='1D Clifford QCA Evolution',
+            xaxis_title='Cell Position',
+            yaxis_title='Time Step',
+            yaxis_autorange='reversed',
+            font=dict(
+                family="Arial, sans-serif",
+                size=18,
+                color="black"
+            ),
+            width=width,
+            height=height,
+            margin=dict(l=80, r=50, t=100, b=80),
+            paper_bgcolor='white',
+            plot_bgcolor='white'
+        )
+        
+        # Set axis properties for cleaner look
+        fig.update_xaxes(showgrid=False, zeroline=False)
+        fig.update_yaxes(showgrid=False, zeroline=False)
+        
+        # Convert to PNG image
+        img_bytes = to_image(fig, format='png')
+        return img_bytes
+        
+    except Exception as e:
+        print(f"Error generating high-resolution plot: {e}")
         return None
-    
-    # Convert strings to numeric data using our mapping (I->0, X->1, Z->2, Y->3)
-    numeric_data = pauli_strings_to_numeric(pauli_strings)
-    
-    # Define colors for each Pauli operator (same as in visualization.py)
-    color_mapping = [
-        [0.0, 'white'],      # I (value 0)
-        [0.33, '#008080'],   # X (value 1)
-        [0.67, '#FF7F50'],   # Z (value 2)
-        [1.0, '#4A4A4A']     # Y (value 3)
-    ]
-    
-    # Create the heatmap for wallpaper
-    fig = go.Figure(data=go.Heatmap(
-        z=numeric_data,
-        colorscale=color_mapping,
-        zmin=0,
-        zmax=3,
-        showscale=False,  # No colorbar for clean wallpaper
-        hoverinfo='none',  # No hover for static image
-    ))
-    
-    # Set completely clean layout with absolute zero margins
-    fig.update_layout(
-        width=width,
-        height=height,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=0, r=0, t=0, b=0, pad=0),
-        autosize=False,
-    )
-    
-    # Eliminate all axes, ticks, and constraints
-    fig.update_xaxes(
-        visible=False,
-        showticklabels=False,
-        showgrid=False,
-        zeroline=False,
-        constrain="domain",
-        range=[0, cell_count],
-        fixedrange=True
-    )
-    
-    fig.update_yaxes(
-        visible=False,
-        showticklabels=False,
-        showgrid=False,
-        zeroline=False,
-        scaleanchor=None,  # Remove scale anchoring
-        constrain="domain",
-        range=[0, time_steps],
-        fixedrange=True
-    )
-    
-    # Convert to PNG bytes with exact dimensions
-    img_bytes = fig.to_image(format="png", width=width, height=height, scale=1)
-    
-    return img_bytes

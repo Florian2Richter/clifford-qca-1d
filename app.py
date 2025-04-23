@@ -16,11 +16,9 @@ from qca.visualization import make_empty_figure, update_figure, pauli_strings_to
 from ui.page_config import setup_page_config
 from ui.sidebar import setup_sidebar
 from ui.main_view import setup_main_view, run_simulation, display_results, handle_initial_load
+from config import BATCH_SIZE
 import io
 import plotly.graph_objects as go
-
-# Global constants
-BATCH_SIZE = 5
 
 def initialize_session_state():
     """Initialize the session state if it doesn't exist."""

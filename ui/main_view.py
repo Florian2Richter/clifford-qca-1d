@@ -5,9 +5,7 @@ from simulation.core import (
     calculate_step
 )
 from qca.visualization import make_empty_figure, update_figure
-
-# Global constants
-BATCH_SIZE = 5
+from config import BATCH_SIZE, EXPORT_RESOLUTIONS
 
 def setup_main_view():
     """
@@ -126,26 +124,20 @@ def display_results(n, plot_placeholder, current_hash):
     col1, col2 = st.columns(2)
     
     # Resolution options dropdown in the second column (no label)
-    resolution_options = {
-        "1920x1080 (baseline)": (1920, 1080),
-        "2560x1440 (QHD)": (2560, 1440),
-        "3840x2160 (4K)": (3840, 2160),
-        "3440x1440 (ultrawide)": (3440, 1440),
-        "1080x1920 (mobile/portrait)": (1080, 1920)
-    }
+    # Using EXPORT_RESOLUTIONS from config
     
     # Export button in the first column
     if col1.button("📥 Export as Wallpaper", use_container_width=True, key="export_button"):
         selected_resolution = col2.selectbox(
             "",
-            options=list(resolution_options.keys()),
+            options=list(EXPORT_RESOLUTIONS.keys()),
             index=0,
             key="resolution_selector",
             label_visibility="collapsed"
         )
         
         # Extract width and height from the selected resolution
-        width, height = resolution_options[selected_resolution]
+        width, height = EXPORT_RESOLUTIONS[selected_resolution]
         
         with st.spinner(f"Generating {selected_resolution} image..."):
             try:
@@ -172,7 +164,7 @@ def display_results(n, plot_placeholder, current_hash):
         # Show resolution dropdown when button is not yet clicked
         col2.selectbox(
             "",
-            options=list(resolution_options.keys()),
+            options=list(EXPORT_RESOLUTIONS.keys()),
             index=0,
             key="resolution_selector",
             label_visibility="collapsed"
