@@ -4,7 +4,7 @@ from simulation.core import (
     vector_to_pauli_string,
     calculate_step
 )
-from qca.visualization import make_empty_figure, update_figure
+from visualization import make_empty_figure, update_figure, generate_hires_plot
 from config import BATCH_SIZE, EXPORT_RESOLUTIONS
 
 def setup_main_view():
@@ -102,7 +102,7 @@ def display_results(n, plot_placeholder, current_hash):
     current_hash : str
         Hash of current parameters to use as part of keys.
     """
-    from qca.visualization import generate_hires_plot
+    from visualization import generate_hires_plot
     
     # Safety check if fig doesn't exist for some reason
     if "fig" not in st.session_state or st.session_state.fig is None:

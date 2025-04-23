@@ -12,7 +12,7 @@ from simulation.core import (
     get_params_hash,
     handle_parameter_changes
 )
-from qca.visualization import make_empty_figure, update_figure, pauli_strings_to_numeric, generate_hires_plot
+from visualization import make_empty_figure, update_figure, pauli_strings_to_numeric, generate_hires_plot
 from ui.page_config import setup_page_config
 from ui.sidebar import setup_sidebar
 from ui.main_view import setup_main_view, run_simulation, display_results, handle_initial_load
