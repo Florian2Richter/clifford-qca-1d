@@ -4,15 +4,6 @@ import plotly.graph_objects as go
 # Global constants for better performance
 PAULI_MAPPING = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}
 
-def pauli_to_numeric(pauli_str):
-    """
-    Convert a Pauli string (e.g., "IXZY...") into an array of numeric codes:
-      I -> 0, X -> 1, Z -> 2, Y -> 3.
-    Returns a numpy array of shape (len(pauli_str),).
-    """
-    numeric = [PAULI_MAPPING.get(ch, 0) for ch in pauli_str]
-    return np.array(numeric)
-
 def pauli_strings_to_numeric(pauli_strings):
     """
     Vectorized conversion of multiple Pauli strings to numeric arrays.

@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
-from qca.visualization import pauli_to_numeric, make_empty_figure, update_figure, pauli_strings_to_numeric
+from qca.visualization import make_empty_figure, update_figure, pauli_strings_to_numeric
 import hashlib
 import io
 import plotly.graph_objects as go

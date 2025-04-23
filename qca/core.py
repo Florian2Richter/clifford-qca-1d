@@ -81,25 +81,3 @@ def pauli_string_to_state(pauli_str):
             raise ValueError("Invalid character in Pauli string. Must be one of I, X, Z, Y.")
         state[2*i], state[2*i+1] = mapping[ch]
     return state
-
-def simulate_QCA(n, T_steps, initial_state, global_operator):
-    """
-    Simulate the 1D QCA for T_steps time steps.
-    
-    - n: number of cells.
-    - initial_state: a numpy array of length 2*n (over F2) where each cell is (x,z).
-    - global_operator: a (2*n)x(2*n) numpy array representing the update rule.
-    
-    Returns a tuple:
-      (states, pauli_strings)
-    where states is a list of state vectors and pauli_strings is the corresponding
-    list of Pauli string representations.
-    """
-    state = initial_state.copy() % 2
-    states = [state.copy()]
-    pauli_strings = [vector_to_pauli_string(state)]
-    for _ in range(T_steps):
-        state = mod2_matmul(global_operator, state) % 2
-        states.append(state.copy())
-        pauli_strings.append(vector_to_pauli_string(state))
-    return states, pauli_strings
