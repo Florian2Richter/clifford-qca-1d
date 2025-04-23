@@ -1,8 +1,10 @@
 import streamlit as st
 import numpy as np
 from qca.core import build_global_operator, pauli_string_to_state, vector_to_pauli_string, mod2_matmul
-from qca.visualization import make_empty_figure, update_figure, pauli_strings_to_numeric
+from qca.visualization import make_empty_figure, update_figure, pauli_strings_to_numeric, generate_hires_plot
 from ui.page_config import setup_page_config
+from ui.sidebar import setup_sidebar
+from ui.main_view import setup_main_view, run_simulation, display_results, handle_initial_load
 import hashlib
 import io
 import plotly.graph_objects as go
@@ -26,209 +28,28 @@ def initialize_session_state():
             "fig": None
         })
 
-def setup_ui_elements():
-    """Set up all UI elements and return input parameters."""
-    # Main title
-    st.markdown('<h1 class="main-header">1D Clifford QCA Simulator</h1>', unsafe_allow_html=True)
-    
-    # Description
-    st.markdown("""
-    <div class="description">
-    This simulator visualizes the evolution of a 1-Dimensional Clifford Quantum Cellular Automaton (QCA). 
-    The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lattice over time.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Sidebar for about section first
-    st.sidebar.markdown('<h3 class="sidebar-header">What is this App about?</h3>', unsafe_allow_html=True)
-    st.sidebar.markdown("""
-    Hi! Whether you're deep into mathematics and quantum theory — or just here for the eye candy — you're in the right place.
-
-    This app lets you explore a 1D Clifford Quantum Cellular Automaton. You can tweak the rules, lean back, and watch the system evolve into beautiful, fractal-like patterns. Just for fun? Export your favorite result as a high-resolution wallpaper!
-
-    Curious what's really going on under the hood?
-    Take a dive into the quantum depths <a href="https://florian2richter.github.io/2025/04/15/what-is-cellular-automata.html" target="_blank">in this blog post</a>, where I explain the science behind Clifford QCAs and how they work.
-
-    Have fun exploring — whatever your angle!
-    """, unsafe_allow_html=True)
-    
-    # Add presets dropdown at the top of the sidebar
-    st.sidebar.markdown('<h3 class="sidebar-header">Preset Configurations</h3>', unsafe_allow_html=True)
-    
-    # Define preset configurations
-    presets = {
-        "Custom": {
-            "description": "Custom configuration (current settings)",
-            "matrices": {
-                "m_left": np.array([[1, 0], [0, 1]]),
-                "m_center": np.array([[1, 1], [0, 1]]),
-                "m_right": np.array([[0, 1], [1, 0]])
-            },
-            "initial_state": {
-                "num_operators": 1,
-                "operators": ["X"],
-                "positions": [250]
-            }
-        },
-        "Glider": {
-            "description": "A 'glider' pattern that propagates through the lattice",
-            "matrices": {
-                "m_left": np.array([[0, 0], [0, 1]]),
-                "m_center": np.array([[0, 1], [1, 0]]),
-                "m_right": np.array([[0, 0], [0, 1]])
-            },
-            "initial_state": {
-                "num_operators": 2,
-                "operators": ["X", "Z"],
-                "positions": [250, 251]
-            }
-        },
-        "Fractal": {
-            "description": "A pattern that creates self-similar fractal structures",
-            "matrices": {
-                "m_left": np.array([[1, 0], [0, 0]]),
-                "m_center": np.array([[1, 1], [1, 0]]),
-                "m_right": np.array([[1, 0], [0, 0]])
-            },
-            "initial_state": {
-                "num_operators": 1,
-                "operators": ["X"],
-                "positions": [250]
-            }
-        }
-    }
-    
-    # Select a preset
-    selected_preset = st.sidebar.selectbox(
-        "Choose a preset configuration:",
-        list(presets.keys())
-    )
-    
-    if selected_preset != "Custom":
-        st.sidebar.info(presets[selected_preset]["description"])
-    
-    # Local rule matrix input
-    st.sidebar.markdown('<h3 class="sidebar-header">Choose your Local Rule Matrices</h3>', unsafe_allow_html=True)
-    st.sidebar.markdown("""
-    <div class="description">
-    Enter values (0 or 1) for each cell in the three matrices.
-    These matrices define how each cell updates based on its left neighbor (M-1), 
-    its own state (M0), and its right neighbor (M1).
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Create matrices in a simple grid layout
-    if selected_preset != "Custom":
-        # Use matrices from preset
-        m_left = presets[selected_preset]["matrices"]["m_left"].copy()
-        m_center = presets[selected_preset]["matrices"]["m_center"].copy()
-        m_right = presets[selected_preset]["matrices"]["m_right"].copy()
-    else:
-        # Use default matrices from Custom preset
-        m_left = presets["Custom"]["matrices"]["m_left"].copy()
-        m_center = presets["Custom"]["matrices"]["m_center"].copy()
-        m_right = presets["Custom"]["matrices"]["m_right"].copy()
-    
-    # Matrix headers
-    st.sidebar.markdown("<div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>"
-                      "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-left'>M-1 (Left)</div>"
-                      "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-center'>M0 (Center)</div>"
-                      "<div style='width: 30%; text-align: center; font-weight: bold;' class='matrix-right'>M1 (Right)</div>"
-                      "</div>", unsafe_allow_html=True)
-    
-    # First row of matrices - use 6 columns side by side
-    row1 = st.sidebar.columns(6)
-    m_left[0, 0] = row1[0].selectbox("", options=[0, 1], index=int(m_left[0, 0]), key="m_left_00", label_visibility="collapsed")
-    m_left[0, 1] = row1[1].selectbox("", options=[0, 1], index=int(m_left[0, 1]), key="m_left_01", label_visibility="collapsed")
-    m_center[0, 0] = row1[2].selectbox("", options=[0, 1], index=int(m_center[0, 0]), key="m_center_00", label_visibility="collapsed")
-    m_center[0, 1] = row1[3].selectbox("", options=[0, 1], index=int(m_center[0, 1]), key="m_center_01", label_visibility="collapsed")
-    m_right[0, 0] = row1[4].selectbox("", options=[0, 1], index=int(m_right[0, 0]), key="m_right_00", label_visibility="collapsed")
-    m_right[0, 1] = row1[5].selectbox("", options=[0, 1], index=int(m_right[0, 1]), key="m_right_01", label_visibility="collapsed")
-    
-    # Second row of matrices - use 6 columns side by side
-    row2 = st.sidebar.columns(6)
-    m_left[1, 0] = row2[0].selectbox("", options=[0, 1], index=int(m_left[1, 0]), key="m_left_10", label_visibility="collapsed")
-    m_left[1, 1] = row2[1].selectbox("", options=[0, 1], index=int(m_left[1, 1]), key="m_left_11", label_visibility="collapsed")
-    m_center[1, 0] = row2[2].selectbox("", options=[0, 1], index=int(m_center[1, 0]), key="m_center_10", label_visibility="collapsed")
-    m_center[1, 1] = row2[3].selectbox("", options=[0, 1], index=int(m_center[1, 1]), key="m_center_11", label_visibility="collapsed")
-    m_right[1, 0] = row2[4].selectbox("", options=[0, 1], index=int(m_right[1, 0]), key="m_right_10", label_visibility="collapsed")
-    m_right[1, 1] = row2[5].selectbox("", options=[0, 1], index=int(m_right[1, 1]), key="m_right_11", label_visibility="collapsed")
-    
-    # Convert the three matrices to the required local rule format
-    local_rule = matrices_to_local_rule(m_left, m_center, m_right)
-    
-    # Initial state selection
-    st.sidebar.markdown('<h3 class="sidebar-header">Initial State</h3>', unsafe_allow_html=True)
-    
-    # Number of non-identity operators
-    if selected_preset != "Custom":
-        preset_num_operators = presets[selected_preset]["initial_state"]["num_operators"]
-        preset_operators = presets[selected_preset]["initial_state"]["operators"]
-        preset_positions = presets[selected_preset]["initial_state"]["positions"]
-        num_operators = st.sidebar.number_input("Number of non-identity operators", 
-                                              min_value=1, max_value=500, value=preset_num_operators, step=1)
-    else:
-        num_operators = st.sidebar.number_input("Number of non-identity operators", 
-                                              min_value=1, max_value=500, value=1, step=1)
-    
-    # Initialize operator list and positions
-    operators = []
-    positions = []
-    
-    # Generate UI for each operator
-    for i in range(int(num_operators)):
-        op_row = st.sidebar.columns(2)
-        
-        # Set default values from preset if applicable
-        if selected_preset != "Custom" and i < len(preset_operators):
-            default_op = preset_operators[i]
-            default_pos = preset_positions[i]
-        else:
-            default_op = "X"
-            default_pos = 250 if i == 0 else 0
-        
-        # Create operator and position inputs
-        operator = op_row[0].selectbox(f"Operator {i+1}", 
-                                      options=["X", "Y", "Z"], 
-                                      index=["X", "Y", "Z"].index(default_op), 
-                                      key=f"op_{i}")
-        position = op_row[1].number_input(f"Position {i+1}", 
-                                        min_value=0, max_value=499, 
-                                        value=default_pos, 
-                                        key=f"pos_{i}")
-        operators.append(operator)
-        positions.append(position)
-    
-    # Simulation parameters section (moved to be the last configurable section)
-    st.sidebar.markdown('<h3 class="sidebar-header">Simulation Parameters</h3>', unsafe_allow_html=True)
-    
-    # Create two columns for simulation parameters
-    col1, col2 = st.sidebar.columns(2)
-    n = col1.number_input("Number of cells", min_value=3, value=500, step=1)
-    T_steps = col2.number_input("Time steps", min_value=1, value=250, step=1)
-    
-    # Create initial state based on operators and positions
-    initial_state = create_initial_state_custom(n, operators, positions)
-    
-    # Create placeholders for plot and status
-    plot_placeholder = st.empty()
-    status_placeholder = st.empty()
-    
-    # Add version indicator at the bottom of the sidebar
-    st.sidebar.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
-    st.sidebar.markdown("**App Version: 2025-04-21.9 (Sidebar Reorganization)**")
-    
-    return n, T_steps, local_rule, initial_state, plot_placeholder, status_placeholder
-
 def parse_local_rule(row1_input, row2_input):
-    """Parse and validate the local rule matrix input."""
+    """
+    Parse input rows into an array for the local rule.
+    
+    Parameters:
+    -----------
+    row1_input, row2_input : str
+        Comma-separated 0s and 1s
+        
+    Returns:
+    --------
+    numpy.ndarray
+        A 2x6 array representing the local rule
+    """
     row1 = parse_matrix_row(row1_input)
     row2 = parse_matrix_row(row2_input)
     
-    if row1 is not None and row2 is not None:
-        return np.array([row1, row2], dtype=int) % 2
-    else:
-        st.stop()
+    # Ensure correct length
+    row1 = row1[:6] + [0] * max(0, 6 - len(row1))
+    row2 = row2[:6] + [0] * max(0, 6 - len(row2))
+    
+    return np.array([row1, row2])
 
 def parse_matrix_row(row_str):
     """Parse a matrix row from a string input."""
@@ -495,89 +316,6 @@ def build_cached_global_operator(n, local_rule):
     """Cached version of build_global_operator."""
     return build_global_operator(n, local_rule)
 
-def generate_hires_plot(pauli_strings, width=1920, height=1080):
-    """
-    Generate a high-resolution plot of the QCA simulation for wallpaper use.
-    
-    Parameters:
-    -----------
-    pauli_strings : list of str
-        List of Pauli strings representing the state at each calculated time step.
-    width : int
-        Width of the output image in pixels (default: 1920 for FullHD).
-    height : int
-        Height of the output image in pixels (default: 1080 for FullHD).
-        
-    Returns:
-    --------
-    bytes
-        The PNG image as bytes for download.
-    """
-    # Get dimensions
-    time_steps = len(pauli_strings)
-    cell_count = len(pauli_strings[0]) if pauli_strings else 0
-    
-    if time_steps == 0 or cell_count == 0:
-        return None
-    
-    # Convert strings to numeric data using our mapping (I->0, X->1, Z->2, Y->3)
-    numeric_data = pauli_strings_to_numeric(pauli_strings)
-    
-    # Define colors for each Pauli operator (same as in visualization.py)
-    color_mapping = [
-        [0.0, 'white'],      # I (value 0)
-        [0.33, '#008080'],   # X (value 1)
-        [0.67, '#FF7F50'],   # Z (value 2)
-        [1.0, '#4A4A4A']     # Y (value 3)
-    ]
-    
-    # Create the heatmap for wallpaper
-    fig = go.Figure(data=go.Heatmap(
-        z=numeric_data,
-        colorscale=color_mapping,
-        zmin=0,
-        zmax=3,
-        showscale=False,  # No colorbar for clean wallpaper
-        hoverinfo='none',  # No hover for static image
-    ))
-    
-    # Set completely clean layout with absolute zero margins
-    fig.update_layout(
-        width=width,
-        height=height,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=0, r=0, t=0, b=0, pad=0),
-        autosize=False,
-    )
-    
-    # Eliminate all axes, ticks, and constraints
-    fig.update_xaxes(
-        visible=False,
-        showticklabels=False,
-        showgrid=False,
-        zeroline=False,
-        constrain="domain",
-        range=[0, cell_count],
-        fixedrange=True
-    )
-    
-    fig.update_yaxes(
-        visible=False,
-        showticklabels=False,
-        showgrid=False,
-        zeroline=False,
-        scaleanchor=None,  # Remove scale anchoring
-        constrain="domain",
-        range=[0, time_steps],
-        fixedrange=True
-    )
-    
-    # Convert to PNG bytes with exact dimensions
-    img_bytes = fig.to_image(format="png", width=width, height=height, scale=1)
-    
-    return img_bytes
-
 def main():
     """Main function to run the application."""
     # Setup page configuration
@@ -587,7 +325,8 @@ def main():
     initialize_session_state()
     
     # Setup UI elements
-    n, T_steps, local_rule, initial_state, plot_placeholder, status_placeholder = setup_ui_elements()
+    n, T_steps, local_rule, initial_state = setup_sidebar()
+    plot_placeholder, status_placeholder = setup_main_view()
     
     # Build the global operator (use cached version)
     global_operator = build_cached_global_operator(n, local_rule)
