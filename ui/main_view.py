@@ -1,93 +1,116 @@
 import streamlit as st
-from qca.visualization import make_empty_figure, update_figure, generate_hires_plot
-from qca.core import vector_to_pauli_string
-from simulation.core import calculate_step
+import numpy as np
+from simulation.core import (
+    vector_to_pauli_string,
+    calculate_step
+)
+from qca.visualization import make_empty_figure, update_figure
+
+# Global constants
+BATCH_SIZE = 5
 
 def setup_main_view():
     """
-    Set up the main view UI elements.
+    Set up the main view UI components.
     
     Returns:
     --------
     tuple
-        (plot_placeholder, status_placeholder) - Placeholders for the main content
+        A tuple containing placeholders for plot and status updates.
     """
-    # Main title
-    st.markdown('<h1 class="main-header">1D Clifford QCA Simulator</h1>', unsafe_allow_html=True)
+    # Set up the main content area
+    st.markdown("## 📊 Simulation Results")
+    st.markdown("This plot shows the evolution of Pauli operators on each qubit over time.")
     
-    # Description
-    st.markdown("""
-    <div class="description">
-    This simulator visualizes the evolution of a 1-Dimensional Clifford Quantum Cellular Automaton (QCA). 
-    The simulation shows how Pauli operators (I, X, Z, Y) propagate through a 1D lattice over time.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Create placeholders for plot and status
+    # Create placeholders for the plot and status updates
     plot_placeholder = st.empty()
     status_placeholder = st.empty()
     
     return plot_placeholder, status_placeholder
 
 def run_simulation(n, plot_placeholder, status_placeholder, current_hash):
-    """Run the simulation, updating the plot as we go."""
-    if not st.session_state.simulation_running:
-        return
+    """
+    Run the progressive simulation.
     
-    # If we're done, mark as complete and exit
-    if st.session_state.current_step >= st.session_state.target_steps:
+    Parameters:
+    -----------
+    n : int
+        Number of cells in the QCA.
+    plot_placeholder : streamlit.empty
+        Placeholder for the plot.
+    status_placeholder : streamlit.empty
+        Placeholder for status updates.
+    current_hash : str
+        Hash of current parameters to use as part of keys.
+    """
+    if st.session_state.current_step < st.session_state.target_steps:
+        # Create the figure once on first batch
+        if st.session_state.fig is None:
+            st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
+            plot_placeholder.plotly_chart(
+                st.session_state.fig,
+                use_container_width=False,
+                config=getattr(st.session_state.fig, '_config', None),
+                key=f"init_plot_{current_hash[:8]}",
+                theme=None
+            )
+        
+        for step in range(st.session_state.current_step, st.session_state.target_steps):
+            next_state, next_pauli = calculate_step(st.session_state.states[-1])
+            st.session_state.states.append(next_state.copy())
+            st.session_state.pauli_strings.append(next_pauli)
+            st.session_state.current_step += 1
+
+            if (st.session_state.current_step % BATCH_SIZE == 0 or 
+                    st.session_state.current_step == st.session_state.target_steps):
+                # Update the figure
+                st.session_state.fig = update_figure(st.session_state.fig, st.session_state.pauli_strings)
+                plot_placeholder.plotly_chart(
+                    st.session_state.fig,
+                    use_container_width=False,
+                    config=getattr(st.session_state.fig, '_config', None),
+                    key=f"step_{st.session_state.current_step}_{current_hash[:8]}",
+                    theme=None
+                )
+        
+        # Always set these flags at the end of simulation
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
+        
+        # Clear the status placeholder before adding success message
         status_placeholder.empty()
         
         # Force a rerun to ensure display_results is shown
         st.rerun()
-        return
-    
-    # Display running status
-    status_placeholder.info(f"Running simulation: step {st.session_state.current_step}/{st.session_state.target_steps}")
-    
-    # Calculate the next step using our global operator
-    next_state, next_pauli = calculate_step(
-        st.session_state.states[-1]
-    )
-    
-    # Store the results
-    st.session_state.states.append(next_state)
-    st.session_state.pauli_strings.append(next_pauli)
-    
-    # Update the plot with all Pauli strings
-    st.session_state.fig = update_figure(st.session_state.fig, st.session_state.pauli_strings)
-    
-    # Display the updated plot
-    plot_placeholder.plotly_chart(
-        st.session_state.fig,
-        use_container_width=False,
-        config=getattr(st.session_state.fig, '_config', None),
-        key=f"plot_{st.session_state.current_step}_{current_hash[:8]}",
-        theme=None
-    )
-    
-    # Increment the step counter
-    st.session_state.current_step += 1
-    
-    # If we've reached the target, mark as complete
-    if st.session_state.current_step >= st.session_state.target_steps:
+        
+    elif not st.session_state.simulation_complete:
+        # This handles the case where we haven't yet marked the simulation as complete
         st.session_state.simulation_running = False
         st.session_state.simulation_complete = True
         status_placeholder.empty()
-        
         # Force a rerun to ensure display_results is shown
         st.rerun()
 
 def display_results(n, plot_placeholder, current_hash):
-    """Display the final simulation results."""
+    """
+    Display the final simulation results.
+    
+    Parameters:
+    -----------
+    n : int
+        Number of cells in the QCA.
+    plot_placeholder : streamlit.empty
+        Placeholder for the plot.
+    current_hash : str
+        Hash of current parameters to use as part of keys.
+    """
+    from qca.visualization import generate_hires_plot
+    
     # Safety check if fig doesn't exist for some reason
     if "fig" not in st.session_state or st.session_state.fig is None:
         st.session_state.fig = make_empty_figure(n, st.session_state.target_steps)
         st.session_state.fig = update_figure(st.session_state.fig, st.session_state.pauli_strings)
     
-    # Display the final plot
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
@@ -111,17 +134,16 @@ def display_results(n, plot_placeholder, current_hash):
         "1080x1920 (mobile/portrait)": (1080, 1920)
     }
     
-    # Selection for resolution
-    selected_resolution = col2.selectbox(
-        "",
-        options=list(resolution_options.keys()),
-        index=0,
-        key="resolution_selector",
-        label_visibility="collapsed"
-    )
-    
     # Export button in the first column
     if col1.button("📥 Export as Wallpaper", use_container_width=True, key="export_button"):
+        selected_resolution = col2.selectbox(
+            "",
+            options=list(resolution_options.keys()),
+            index=0,
+            key="resolution_selector",
+            label_visibility="collapsed"
+        )
+        
         # Extract width and height from the selected resolution
         width, height = resolution_options[selected_resolution]
         
@@ -146,19 +168,41 @@ def display_results(n, plot_placeholder, current_hash):
             except Exception as e:
                 st.error(f"Error generating high-resolution image: {str(e)}")
                 st.exception(e)  # Show detailed error information
+    else:
+        # Show resolution dropdown when button is not yet clicked
+        col2.selectbox(
+            "",
+            options=list(resolution_options.keys()),
+            index=0,
+            key="resolution_selector",
+            label_visibility="collapsed"
+        )
 
 def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeholder, current_hash):
-    """Handle the initial load of the application."""
-    from qca.core import vector_to_pauli_string
+    """
+    Handle the initial load of the application.
     
-    # Convert the initial state to Pauli string
+    Parameters:
+    -----------
+    n : int
+        Number of cells in the QCA.
+    T_steps : int
+        Number of simulation steps.
+    initial_state : numpy.ndarray
+        Initial state vector.
+    global_operator : numpy.ndarray
+        Global operator for the simulation.
+    plot_placeholder : streamlit.empty
+        Placeholder for the plot.
+    current_hash : str
+        Hash of current parameters to use as part of keys.
+    """
     initial_pauli = vector_to_pauli_string(initial_state)
     
     # Create the figure once
     st.session_state.fig = make_empty_figure(n, T_steps)
     st.session_state.fig = update_figure(st.session_state.fig, [initial_pauli])
     
-    # Display the initial plot
     plot_placeholder.plotly_chart(
         st.session_state.fig,
         use_container_width=False,
@@ -167,9 +211,8 @@ def handle_initial_load(n, T_steps, initial_state, global_operator, plot_placeho
         theme=None
     )
     
-    # Initialize session state for the simulation
     st.session_state.pauli_strings = [initial_pauli]
-    st.session_state.states = [initial_state]
+    st.session_state.states = [initial_state.copy()]
     st.session_state.global_operator = global_operator
     st.session_state.target_steps = T_steps
     st.session_state.params_hash = current_hash
