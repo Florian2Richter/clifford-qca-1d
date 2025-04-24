@@ -1,8 +1,8 @@
 import streamlit as st
 
 # Current app version
-APP_VERSION = "2025-04-24.1"
-APP_VERSION_LABEL = "without Animation"
+APP_VERSION = "2025-04-24.2"
+APP_VERSION_LABEL = "fixed colorbar"
 
 def setup_page_config():
     """Configure the Streamlit page settings."""

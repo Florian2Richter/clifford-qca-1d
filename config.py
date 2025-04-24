@@ -10,10 +10,14 @@ PAULI_MAPPING = {'I': 0, 'X': 1, 'Z': 2, 'Y': 3}  # Mapping of Pauli operators t
 
 # Color mappings for visualization
 COLOR_MAPPING = [
-    [0.0, 'white'],      # I (value 0)
-    [0.33, '#008080'],   # X (value 1)
-    [0.67, '#FF7F50'],   # Z (value 2)
-    [1.0, '#4A4A4A']     # Y (value 3)
+   [0, 'white'],       # I (value 0) start
+    [0.249, 'white'],   # I (value 0) end
+    [0.25, '#008080'],  # X (value 1) start
+    [0.499, '#008080'], # X (value 1) end
+    [0.5, '#FF7F50'],   # Z (value 2) start
+    [0.749, '#FF7F50'], # Z (value 2) end
+    [0.75, '#4A4A4A'],  # Y (value 3) start
+    [1.0, '#4A4A4A']    # Y (v
 ]
 
 # Default figure dimensions

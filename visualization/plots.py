@@ -29,8 +29,8 @@ def make_empty_figure(cell_count, total_time_steps):
         x=list(range(cell_count)),
         y=list(range(total_time_steps)),
         colorscale=COLOR_MAPPING,
-        zmin=0,
-        zmax=3,
+        zmin=-0.5,
+        zmax=3.5,
         showscale=True,
         colorbar=dict(
             title='Pauli Operator',
